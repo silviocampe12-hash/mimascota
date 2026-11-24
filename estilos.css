@@ -1,0 +1,64 @@
+/* ───────── Tokens ───────── */
+:root {
+  --fondo: #F1EEFF; --tinta: #1E1546; --uva: #5B3DF5; --limon: #DFF35B;
+  --durazno: #FFC9B5; --menta: #B8F0D8; --alerta: #FF5A4F;
+  --forma: 2.4rem 2.4rem 2.4rem .7rem;
+  --titulo: 'Bricolage Grotesque', system-ui, sans-serif;
+  --texto: 'Figtree', system-ui, sans-serif;
+}
+
+/* ───────── Base ───────── */
+* { box-sizing: border-box; margin: 0 }
+body { background: var(--fondo); color: var(--tinta); font: 400 1rem/1.6 var(--texto); min-height: 100dvh; padding: 0 0 5.5rem }
+h1, h2, h3 { font-family: var(--titulo); line-height: 1.05; font-weight: 800 }
+h1 { font-size: clamp(2.6rem, 8vw, 5rem) }
+h2 { font-size: 1.8rem; margin-bottom: 1rem }
+a { color: inherit }
+:focus-visible { outline: 3px solid var(--uva); outline-offset: 3px }
+
+/* ───────── Navegación ───────── */
+.dock { position: fixed; inset: auto 0 0; display: flex; gap: .3rem; padding: .6rem; overflow-x: auto; background: var(--tinta); z-index: 1000 }
+.dock a { color: var(--fondo); text-decoration: none; padding: .5rem .9rem; border-radius: 99px; white-space: nowrap; font-weight: 600 }
+.dock a.activa { background: var(--limon); color: var(--tinta) }
+.dock .marca { font: 800 1.2rem var(--titulo); color: var(--durazno) }
+.dock .sos { background: var(--alerta); color: #fff; margin-left: auto }
+
+/* ───────── Layout ───────── */
+main { max-width: 68rem; margin: auto; padding: 2rem 1.2rem }
+.grilla { display: grid; gap: 1.2rem; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)) }
+.tarjeta { background: #fff; border-radius: var(--forma); padding: 1.4rem; box-shadow: 0 .4rem 0 var(--tinta) }
+.tarjeta:nth-child(3n+2) { background: var(--menta) }
+.tarjeta:nth-child(3n) { background: var(--durazno) }
+.fila { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap }
+.suave { opacity: .7; font-size: .9rem }
+
+/* ───────── Controles ───────── */
+button, input, select { font: inherit; color: inherit }
+input, select { padding: .6rem .9rem; border: 2px solid var(--tinta); border-radius: 1rem; background: #fff; min-width: 0 }
+.btn { padding: .6rem 1.2rem; border: 2px solid var(--tinta); border-radius: 99px; background: var(--limon); font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block }
+.btn:hover { background: var(--uva); color: #fff }
+.btn:disabled { opacity: .5; cursor: not-allowed; background: #fff; color: inherit }
+.btn.sos { background: var(--alerta); color: #fff }
+.chip { padding: .3rem .9rem; border: 2px solid var(--tinta); border-radius: 99px; background: transparent; cursor: pointer }
+.chip[aria-pressed="true"] { background: var(--tinta); color: var(--fondo) }
+.muestra { width: 2.2rem; height: 2.2rem; border-radius: 50%; border: 3px solid var(--tinta); cursor: pointer }
+.muestra[aria-pressed="true"] { outline: 3px solid var(--uva); outline-offset: 2px }
+form { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1rem }
+
+/* ───────── Mascota y huellitas ───────── */
+.avatar { width: min(100%, 15rem); aspect-ratio: 1; background: var(--limon); border-radius: 58% 42% 52% 48% / 48% 56% 44% 52%; display: grid; place-items: center }
+.avatar svg { width: 88% }
+.avatar.mini { width: 3.2rem }
+.huella { width: 1.8rem; fill: none; stroke: var(--tinta); stroke-width: 1.5; vertical-align: middle; transition: transform .2s }
+.me-gusta { display: flex; align-items: center; gap: .4rem; background: none; border: 0; cursor: pointer; font-weight: 600 }
+.me-gusta[aria-pressed="true"] .huella { fill: var(--uva); stroke: var(--uva); transform: rotate(-14deg) scale(1.2) }
+
+/* ───────── Secciones ───────── */
+.hero { display: grid; gap: 2rem; align-items: center; margin-bottom: 2.5rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)) }
+#mapa { height: 26rem; border: 3px solid var(--tinta); border-radius: var(--forma); margin-top: 1rem }
+.estado { padding: .2rem .7rem; border-radius: 99px; background: var(--menta); font-size: .85rem; font-weight: 600 }
+.estado.vencida { background: var(--alerta); color: #fff }
+.urgencia { font: 800 2rem var(--titulo) }
+.pronto { background: var(--limon); padding: 1rem 1.4rem; border-radius: var(--forma); margin-bottom: 1.4rem; font-weight: 600 }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+.pin { font-size: 1.8rem }
