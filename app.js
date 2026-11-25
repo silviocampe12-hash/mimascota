@@ -3,6 +3,7 @@ import { h, limpiar, telefono, numero, esColor, leer, guardar } from './segurida
 import { avatar, huella, COLORES } from './mascota.js'
 import { VETS, POSTS, PRODUCTOS, PERDIDOS } from './datos.js'
 import { crearVistaMascotas, limpiarMedios } from './perfiles.js'
+import { crearVistaGuardias } from './guardias.js'
 
 /* ───────── Estado ───────── */
 const estado = {
@@ -13,6 +14,7 @@ const estado = {
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 
 const perfiles = crearVistaMascotas(render)
+const vistaGuardias = crearVistaGuardias(render)
 const agregar = (clave, item) => { guardar(clave, [...leer(clave, []), item].slice(-50)); estado[clave === 'productos' ? 'productos' : 'perdidos'].push(item); render() }
 
 /* ───────── Piezas reutilizables ───────── */
@@ -38,16 +40,13 @@ const vistas = {
 
   mapa: () => h('section', {},
     h('h1', {}, 'Mapa'),
+    h('p', { class: 'suave' }, 'Ubicaciones ficticias de demostración. No utilizar como información de emergencia.'),
     chips(['Todos', 'Veterinaria', 'Tienda', 'Peluquería', 'Parque'], estado.filtroMapa, (f) => { estado.filtroMapa = f; render() }),
     h('div', { id: 'mapa', role: 'application', 'aria-label': 'Mapa de lugares para mascotas' })),
 
   mascota: perfiles.vista,
 
-  urgencias: () => h('section', {},
-    h('h1', {}, 'Urgencias'),
-    h('p', { class: 'suave' }, 'Veterinarias con guardia, un toque para llamar.'),
-    h('div', { class: 'grilla' }, VETS.filter((v) => v.h24 && v.tel).map((v) =>
-      h('article', { class: 'tarjeta' }, h('p', { class: 'urgencia' }, v.nombre), h('p', {}, 'Abierto las 24 horas'), llamar(v.tel))))),
+  urgencias: vistaGuardias,
 
   catalogo: () => {
     const marcas = [...new Set(estado.productos.map((p) => p.marca))]
@@ -87,7 +86,7 @@ const iniciarMapa = () => {
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(mapa)
   VETS.filter((v) => estado.filtroMapa === 'Todos' || v.tipo === estado.filtroMapa).forEach((v) => {
     const icono = L.divIcon({ className: '', html: `<span class="pin">${v.h24 ? '🚑' : '🐾'}</span>`, iconSize: [30, 30] })
-    L.marker([v.lat, v.lng], { icon: icono }).addTo(mapa).bindPopup(h('div', {}, h('strong', {}, v.nombre), h('br'), `${v.tipo}${v.h24 ? ' · 24 h' : ''}`))
+    L.marker([v.lat, v.lng], { icon: icono }).addTo(mapa).bindPopup(h('div', {}, h('strong', {}, v.nombre), h('br'), `${v.tipo} · Ejemplo ficticio`))
   })
 }
 
