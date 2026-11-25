@@ -1,27 +1,29 @@
 // Mimo · router, estado y vistas
-import { h, limpiar, telefono, numero, esColor, leer, guardar } from './seguridad.js'
-import { avatar, huella, COLORES } from './mascota.js'
-import { VETS, POSTS, PRODUCTOS, PERDIDOS } from './datos.js'
+import { h, limpiar, numero, leer, guardar } from './seguridad.js'
+import { avatar, huella } from './mascota.js'
+import { VETS, POSTS, PRODUCTOS } from './datos.js'
 import { crearVistaMascotas, limpiarMedios } from './perfiles.js'
 import { crearVistaGuardias } from './guardias.js'
+import { crearAyuda } from './ayuda.js'
+import { crearBiblioteca } from './biblioteca.js'
 
 /* ───────── Estado ───────── */
 const estado = {
   productos: [...PRODUCTOS, ...leer('productos', [])],
-  perdidos: [...PERDIDOS, ...leer('perdidos', [])],
-  likes: new Set(), filtroMapa: 'Todos', marca: 'Todas', busqueda: '',
+  likes: new Set(), filtroMapa: 'Todos', marca: 'Todas',
 }
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 
 const perfiles = crearVistaMascotas(render)
 const vistaGuardias = crearVistaGuardias(render)
-const agregar = (clave, item) => { guardar(clave, [...leer(clave, []), item].slice(-50)); estado[clave === 'productos' ? 'productos' : 'perdidos'].push(item); render() }
+const ayuda = crearAyuda(render)
+const biblioteca = crearBiblioteca(render)
+const agregar = (clave, item) => { guardar(clave, [...leer(clave, []), item].slice(-50)); estado.productos.push(item); render() }
 
 /* ───────── Piezas reutilizables ───────── */
 const campo = (nombre, ph, extra = {}) => h('input', { name: nombre, placeholder: ph, maxlength: 60, required: true, 'aria-label': ph, ...extra })
 const formulario = (alEnviar, ...hijos) => h('form', { onsubmit: (e) => { e.preventDefault(); alEnviar(Object.fromEntries(new FormData(e.target))) } }, ...hijos, h('button', { class: 'btn' }, 'Guardar'))
 const chips = (lista, actual, alElegir) => h('div', { class: 'fila' }, lista.map((x) => h('button', { class: 'chip', 'aria-pressed': x === actual, onclick: () => alElegir(x) }, x)))
-const llamar = (tel, texto = 'Llamar') => tel && h('a', { class: 'btn sos', href: `tel:${telefono(tel)}` }, texto)
 
 /* ───────── Vistas ───────── */
 const vistas = {
@@ -29,6 +31,7 @@ const vistas = {
     h('h1', {}, 'Comunidad'),
     h('p', { class: 'suave' }, 'Comunidad de demostración: las publicaciones propias solo se ven en este navegador.'),
     h('div', { class: 'grilla' }, perfiles.publicaciones()),
+    h('div', { class: 'grilla' }, ayuda.social()),
     h('div', { class: 'grilla' }, POSTS.map((p) => {
       const activo = estado.likes.has(p.id)
       return h('article', { class: 'tarjeta' },
@@ -65,17 +68,11 @@ const vistas = {
     h('p', { class: 'pronto' }, 'Estamos armando la tienda. Por ahora podés mirar qué va a tener.'),
     h('div', { class: 'grilla' }, estado.productos.slice(0, 6).map((p) => h('article', { class: 'tarjeta' }, h('h3', {}, p.nombre), h('p', {}, pesos.format(p.precio)), h('button', { class: 'btn', disabled: true }, 'Disponible pronto'))))),
 
-  perdidos: () => {
-    const q = estado.busqueda.toLowerCase()
-    const lista = estado.perdidos.filter((p) => `${p.nombre} ${p.tipo} ${p.zona}`.toLowerCase().includes(q))
-    return h('section', {},
-      h('h1', {}, 'Perdidos'),
-      h('input', { type: 'search', placeholder: 'Buscar por nombre, zona o tipo', 'aria-label': 'Buscar', value: estado.busqueda, oninput: (e) => { estado.busqueda = limpiar(e.target.value, 40); render(e.target) } }),
-      h('div', { class: 'grilla', style: { marginTop: '1.2rem' } }, lista.length ? lista.map((p) => h('article', { class: 'tarjeta' }, avatar(p, true), h('h3', {}, p.nombre), h('p', {}, `Visto en ${p.zona} · ${p.fecha}`), llamar(p.tel, 'Tengo información'))) : h('p', {}, 'Sin resultados.')),
-      h('h2', { style: { marginTop: '2rem' } }, 'Reportar una mascota perdida'),
-      formulario((d) => agregar('perdidos', { nombre: limpiar(d.nombre, 24), tipo: d.tipo === 'perro' ? 'perro' : 'gato', ...perfiles.colores(), zona: limpiar(d.zona, 40), fecha: new Date().toISOString().slice(0, 10), tel: telefono(d.tel) }),
-        campo('nombre', 'Nombre'), h('select', { name: 'tipo', 'aria-label': 'Tipo' }, h('option', { value: 'gato' }, 'Gato'), h('option', { value: 'perro' }, 'Perro')), campo('zona', 'Zona'), campo('tel', 'Teléfono', { type: 'tel' })))
-  },
+  perdidos: ayuda.perdidos,
+  ayuda: ayuda.rescates,
+  persona: ayuda.persona,
+  biblioteca,
+
 }
 
 /* ───────── Mapa (Leaflet) ───────── */
@@ -91,13 +88,15 @@ const iniciarMapa = () => {
 }
 
 /* ───────── Router ───────── */
-function render(foco) {
+function render() {
   limpiarMedios()
-  const ruta = vistas[location.hash.slice(1)] ? location.hash.slice(1) : 'mascota'
+  ayuda.limpiar()
+  const solicitada = location.hash.slice(1)
+  const ruta = Object.hasOwn(vistas, solicitada) ? solicitada : 'mascota'
+  mapa?.remove(); mapa = undefined
   document.getElementById('vista').replaceChildren(vistas[ruta]())
   document.querySelectorAll('.dock a').forEach((a) => a.classList.toggle('activa', a.hash === `#${ruta}` && !a.classList.contains('marca')))
   if (ruta === 'mapa') iniciarMapa()
-  if (foco) document.querySelector('input[type=search]')?.focus()
 }
 
 addEventListener('hashchange', () => { render(); scrollTo(0, 0) })
