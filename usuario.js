@@ -2,6 +2,7 @@
 import { h } from './seguridad.js';
 import { nuevoId } from './mascotas.js?v=8';
 import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js';
+import { PAISES, ubicacionPublica, coordenadasValidas, validarUbicacion, capturarUbicacion } from './ubicacion.js?v=9';
 const KEY='mimo_persona_v1';
 export const DUENO='Dueño de mascotas';
 export const ROLES=['Adoptante','Hogar provisorio (provi)','Padrino o madrina','Voluntario'];
@@ -11,9 +12,9 @@ const leer=(k,def)=>{const s=localStorage.getItem(k);return s===null?def:JSON.pa
 export const mascotasReales=()=>lista(leer('mimo_mascotas',[])).filter(m=>m&&!m.demo&&m.id);
 const rolesValidos=x=>ROLES.filter(r=>lista(x).includes(r));
 export const requiereVivienda=r=>r.includes(ROLES[0])||r.includes(ROLES[1]);
-// Campos editables para la futura entrevista; no se pide domicilio exacto ni datos de terceros.
+// La ubicación se gestiona una sola vez en el perfil. La ficha de vivienda es privada.
 export const VIVIENDA=[
- ['localidad','Localidad y provincia / país'],['barrio','Barrio o zona (opcional)'],
+ ['barrio','Barrio o zona (opcional)'],
  ['tipo','Tipo de vivienda',['Casa','Departamento','Otro']],
  ['tenencia','Situación de la vivienda',['Propia','Alquilada','Prestada / compartida','Otra']],
  ['permiso','¿Está permitida la convivencia con animales?',['Sí','No','A confirmar']],
@@ -35,7 +36,7 @@ export function leerPersona(){
  if(raw!==null){if(!raw||typeof raw!=='object'||!Array.isArray(raw.roles))throw Error('Perfil local inválido.');return raw;}
  // La versión anterior tenía un único nombre. Se conserva sin inventar el apellido.
  const anterior=leer('mimo_ayuda_v1',{})?.persona||{};
- return {nombre:texto(anterior.nombre,80),apellido:'',edad:'',fotoId:null,roles:[],pendientes:rolesValidos(anterior.roles),vivienda:{},creado:false};
+ return {nombre:texto(anterior.nombre,80),apellido:'',edad:'',fotoId:null,roles:[],pendientes:rolesValidos(anterior.roles),vivienda:{},ubicacion:{},creado:false};
 }
 export function validarPersona(p,hayMascota){
  if(!hayMascota)throw Error('Registrá una mascota real antes de guardar el perfil.');
@@ -43,6 +44,7 @@ export function validarPersona(p,hayMascota){
  if(String(p.edad).trim()===''||!Number.isInteger(Number(p.edad))||Number(p.edad)<1||Number(p.edad)>120)throw Error('Ingresá una edad válida.');
  const roles=rolesValidos(p.roles);
  if(roles.length&&!p.fotoId)throw Error('Para ofrecer colaboración necesitás una foto de perfil.');
+ const ubicacion=validarUbicacion(p.ubicacion,requiereVivienda(roles));
  const vivienda={};
  for(const [k,label,opts] of camposPara(roles)){
   const v=texto(p.vivienda?.[k],600);
@@ -50,13 +52,14 @@ export function validarPersona(p,hayMascota){
   if(opts&&!opts.includes(v))throw Error('Elegí una opción válida: '+label);
   vivienda[k]=v;
  }
- return {nombre:texto(p.nombre,80),apellido:texto(p.apellido,80),edad:Number(p.edad),fotoId:p.fotoId||null,roles,vivienda,creado:true,pendientes:[]};
+ return {nombre:texto(p.nombre,80),apellido:texto(p.apellido,80),edad:Number(p.edad),fotoId:p.fotoId||null,roles,vivienda,ubicacion,creado:true,pendientes:[]};
 }
 // Única proyección para la comunidad: nunca devuelve la ficha de entrevista.
 export function perfilVisible(){
- try{const p=leerPersona(),activo=p.creado===true&&mascotasReales().length>0;
-  return {nombre:[p.nombre,p.apellido].filter(Boolean).join(' ')||'Mi perfil',edad:activo?p.edad:null,fotoId:activo?p.fotoId:null,roles:activo?[DUENO,...(p.fotoId?rolesValidos(p.roles):[])]:[],activo};
- }catch{return {nombre:'Mi perfil',edad:null,fotoId:null,roles:[],activo:false};}
+ try{const p=leerPersona(),ubicacion=ubicacionPublica(p.ubicacion),activo=p.creado===true&&mascotasReales().length>0&&!!ubicacion;
+  const roles=rolesValidos(p.roles).filter(r=>!requiereVivienda([r])||coordenadasValidas(p.ubicacion?.gps));
+  return {nombre:[p.nombre,p.apellido].filter(Boolean).join(' ')||'Mi perfil',edad:activo?p.edad:null,fotoId:activo?p.fotoId:null,roles:activo?[DUENO,...(p.fotoId?roles:[])]:[],ubicacion:activo?ubicacion:null,activo};
+ }catch{return {nombre:'Mi perfil',edad:null,fotoId:null,roles:[],ubicacion:null,activo:false};}
 }
 async function prepararFoto(file){
  validarArchivo(file,true);if(!file.type.startsWith('image/'))throw Error('Elegí una imagen válida.');
@@ -71,21 +74,41 @@ const entrada=(k,t,opts,v)=>h('label',{class:'mimo-campo'},t,opts?h('select',{na
 const check=(t,checked,fn)=>h('label',{class:'persona-check'},h('input',{type:'checkbox',checked,onchange:e=>fn(e.target.checked)}),t);
 export function crearPersona(render){
  const urls=new Set();const limpiar=()=>{for(const u of urls)URL.revokeObjectURL(u);urls.clear();};
- function foto(p){const box=h('div',{class:'persona-foto'},(p.nombre||'M').slice(0,1).toUpperCase());if(p.fotoId)leerArchivo(p.fotoId).then(b=>{if(!b||!box.isConnected)return;const u=URL.createObjectURL(b);urls.add(u);box.replaceChildren(h('img',{src:u,alt:'Foto de perfil'}));}).catch(()=>{});return box;}
+ function foto(p,puedeActualizar=()=>true){const box=h('div',{class:'persona-foto'},(p.nombre||'M').slice(0,1).toUpperCase());if(p.fotoId)leerArchivo(p.fotoId).then(b=>{if(!b||!box.isConnected||!puedeActualizar())return;const u=URL.createObjectURL(b);urls.add(u);box.replaceChildren(h('img',{src:u,alt:'Foto de perfil'}));}).catch(()=>{});return box;}
  function vista(){
   let p,mascotas;try{p=leerPersona();mascotas=mascotasReales();}catch(e){return card(h('h1',{},'Mi perfil'),nota('No se pudieron leer los datos. No se modificó nada: '+e.message));}
   const visible=perfilVisible();let elegidos=rolesValidos([...p.roles,...lista(p.pendientes)]),quitar=false;
-  const panel= h('div',{class:'persona-entrevista'}),aviso=h('p',{class:'persona-aviso'}),archivo=h('input',{name:'foto',type:'file',accept:'image/jpeg,image/png,image/webp,image/gif,image/avif'}),preview=foto(p);
-  let borrador={...p.vivienda};let prevUrl=null;
+  const panel= h('div',{class:'persona-entrevista'}),aviso=h('p',{class:'persona-aviso'}),archivo=h('input',{name:'foto',type:'file',accept:'image/jpeg,image/png,image/webp,image/gif,image/avif',hidden:true});
+  let borrador={...p.vivienda},prevUrl=null,fotoTocada=false;
+  const preview=foto(p,()=>!fotoTocada);
+  const camara=h('button',{type:'button',class:'persona-camara','aria-label':'Elegir foto de perfil',title:'Elegir foto de perfil',onclick:()=>archivo.click()},'📷');
+  const avatarEditor=h('div',{class:'persona-avatar-editor'},preview,camara,archivo);
+  const anteriorUb=p.ubicacion||{};let gps=coordenadasValidas(anteriorUb.gps)?anteriorUb.gps:null;
+  let solicitud=0;
+  const estadoGPS=h('p',{class:'persona-aviso',role:'status','aria-live':'polite'});
+  const requisitoGPS=h('p',{class:'suave'});
+  const gpsEstado=()=>{estadoGPS.textContent=gps?`Ubicación registrada · precisión estimada: ${Math.round(gps.precision)} m. Solo se guarda al guardar el perfil.`:'Sin ubicación precisa registrada.';};
+  const activarGPS=h('button',{type:'button',class:'btn',onclick:async()=>{
+   if(!confirm('¿Estás en tu vivienda o en la ubicación que querés registrar? Las coordenadas quedarán privadas en este navegador.'))return;
+   const id=++solicitud;activarGPS.disabled=true;estadoGPS.textContent='Solicitando ubicación…';
+   try{const nueva=await capturarUbicacion();if(id===solicitud&&estadoGPS.isConnected){gps=nueva;gpsEstado();}}
+   catch(e){if(id===solicitud&&estadoGPS.isConnected)estadoGPS.textContent=e.message+(gps?' Se conserva la ubicación anterior.':'');}
+   finally{if(id===solicitud)activarGPS.disabled=false;}
+  }},'📍 Activar / actualizar ubicación');
+  const quitarGPS=boton('Quitar ubicación precisa',()=>{solicitud++;gps=null;activarGPS.disabled=false;gpsEstado();});
+  gpsEstado();
+  const ubicacionCard=card(h('h2',{},'Ubicación'),nota('País, provincia o región y ciudad organizan Mimo por zonas. Elegilos según tu residencia. La ubicación precisa nunca aparece en el perfil visible.'),h('div',{class:'persona-campos'},h('label',{class:'mimo-campo'},'País',h('select',{name:'pais',required:true,autocomplete:'country'},h('option',{value:'',selected:!anteriorUb.pais},'Elegí tu país'),PAISES.map(o=>h('option',{value:o.codigo,selected:o.codigo===anteriorUb.pais},o.nombre)))),campo('provincia','Provincia / estado / región',anteriorUb.provincia||'',{required:true,maxlength:100,autocomplete:'address-level1'}),campo('ciudad','Ciudad / localidad',anteriorUb.ciudad||'',{required:true,maxlength:100,autocomplete:'address-level2'})),p.vivienda?.localidad?nota('Localidad registrada anteriormente: '+p.vivienda.localidad+'. Completá los nuevos campos por separado.'):null,requisitoGPS,h('div',{class:'persona-gps-acciones'},activarGPS,quitarGPS),estadoGPS,nota('El navegador obtiene la posición actual. La precisión puede variar; no verifica el domicilio ni completa automáticamente la ciudad. No se envía la posición a servicios externos.'));
+
+  for(const el of ubicacionCard.querySelectorAll('input,select'))el.addEventListener('change',()=>{if(gps){solicitud++;gps=null;activarGPS.disabled=false;gpsEstado();estadoGPS.textContent='Cambió la ciudad, provincia o país. Volvé a capturar la ubicación si corresponde.';}});
   function refrescar(){
    for(const el of panel.querySelectorAll('input,textarea,select'))borrador[el.name]=el.value;
    panel.replaceChildren();panel.hidden=!requiereVivienda(elegidos);
    if(!panel.hidden)panel.append(h('h2',{},'Ficha privada para entrevista'),nota('Solo se guarda en este navegador. A futuro se compartirá únicamente con rescatistas autorizados, con tu permiso. No ingreses direcciones exactas ni datos de terceros.'),h('div',{class:'persona-campos'},...camposPara(elegidos).map(([k,t,opts])=>entrada(k,t,opts,borrador[k]))));
    aviso.textContent=elegidos.length?'La foto es obligatoria para activar estas opciones de colaboración.':'La foto es opcional para el perfil básico.';
-   archivo.required=elegidos.length>0&&(!p.fotoId||quitar);
+   requisitoGPS.textContent=requiereVivienda(elegidos)?'Ubicación precisa obligatoria para adoptantes y provis.':'Ubicación precisa opcional para el resto de los roles.';
   }
   function vistaFoto(){if(prevUrl){URL.revokeObjectURL(prevUrl);urls.delete(prevUrl);prevUrl=null;}const file=archivo.files?.[0];if(file){prevUrl=URL.createObjectURL(file);urls.add(prevUrl);preview.replaceChildren(h('img',{src:prevUrl,alt:'Vista previa'}));}else if(quitar){preview.textContent=(p.nombre||'M').slice(0,1).toUpperCase();}refrescar();}
-  archivo.addEventListener('change',()=>{quitar=false;vistaFoto();});
+  archivo.addEventListener('change',()=>{if(archivo.files?.length){fotoTocada=true;quitar=false;vistaFoto();}});
   const roles=h('div',{class:'persona-roles'},...ROLES.map((r,i)=>h('div',{class:'persona-rol'},check(r,elegidos.includes(r),v=>{elegidos=v?[...elegidos,r]:elegidos.filter(x=>x!==r);refrescar();}),nota(['Quiero adoptar y completar mi ficha.','Puedo recibir temporalmente a un animal.','Estoy disponible para apoyar un caso.','Puedo colaborar con mi tiempo.'][i]))));
   const form=h('form',{class:'persona-form',onsubmit:async e=>{
    e.preventDefault();const f=e.currentTarget,b=f.querySelector('button[type=submit]');b.disabled=true;let nuevo=null,persistido=false;
@@ -93,14 +116,15 @@ export function crearPersona(render){
     if(file){const blob=await prepararFoto(file);nuevo=nuevoId();await guardarArchivo(nuevo,blob);fotoId=nuevo;}
     else if(elegidos.length&&fotoId&&!(await leerArchivo(fotoId)))throw Error('La foto guardada no está disponible. Seleccioná otra.');
     const vivienda=Object.fromEntries(camposPara(elegidos).map(([k])=>[k,d.get(k)]));
-    const next=validarPersona({nombre:d.get('nombre'),apellido:d.get('apellido'),edad:d.get('edad'),fotoId,roles:elegidos,vivienda},mascotasReales().length>0);
+    const ubicacion={pais:d.get('pais'),provincia:d.get('provincia'),ciudad:d.get('ciudad'),gps};
+    const next=validarPersona({nombre:d.get('nombre'),apellido:d.get('apellido'),edad:d.get('edad'),fotoId,roles:elegidos,vivienda,ubicacion},mascotasReales().length>0);
     localStorage.setItem(KEY,JSON.stringify(next));persistido=true;
     if(p.fotoId&&p.fotoId!==fotoId)await borrarArchivo(p.fotoId).catch(console.error);
     render();
    }catch(err){if(nuevo&&!persistido)await borrarArchivo(nuevo).catch(console.error);alert(err.message);}finally{b.disabled=false;}
-  }},card(h('h2',{},'Datos personales'),h('div',{class:'persona-identidad'},preview,h('div',{class:'persona-foto-control'},h('label',{class:'mimo-campo'},'Foto de perfil',archivo),p.fotoId?boton('Quitar foto',()=>{quitar=true;archivo.value='';vistaFoto();}):null,aviso)),h('div',{class:'persona-campos'},campo('nombre','Nombre',p.nombre,{required:true,maxlength:80,autocomplete:'given-name'}),campo('apellido','Apellido',p.apellido,{required:true,maxlength:80,autocomplete:'family-name'}),campo('edad','Edad',p.edad,{type:'number',min:1,max:120,step:1,required:true}))),card(h('h2',{},'Cómo participo'),h('div',{class:'persona-rol persona-base'},h('strong',{},'✓ '+DUENO),nota('Rol base obligatorio. No se puede quitar.')),roles),panel,card(h('h2',{},'Mis mascotas'),mascotas.length?h('div',{class:'persona-animales'},...mascotas.map(m=>h('span',{},m.nombre+' · '+m.especie))):nota('Todavía no hay mascotas reales registradas. Los perfiles de ejemplo no cuentan.'),h('a',{href:'#mascota',class:'chip'},'Gestionar mis mascotas')),h('button',{type:'submit',class:'btn',disabled:!mascotas.length},'Guardar perfil'));
+  }},card(h('h2',{},'Datos personales'),h('div',{class:'persona-foto-control'},h('strong',{},'Foto de perfil'),boton('Quitar foto',()=>{fotoTocada=true;quitar=true;archivo.value='';vistaFoto();}),aviso),h('div',{class:'persona-campos'},campo('nombre','Nombre',p.nombre,{required:true,maxlength:80,autocomplete:'given-name'}),campo('apellido','Apellido',p.apellido,{required:true,maxlength:80,autocomplete:'family-name'}),campo('edad','Edad',p.edad,{type:'number',min:1,max:120,step:1,required:true}))),ubicacionCard,card(h('h2',{},'Cómo participo'),h('div',{class:'persona-rol persona-base'},h('strong',{},'✓ '+DUENO),nota('Rol base obligatorio. No se puede quitar.')),roles),panel,card(h('h2',{},'Mis mascotas'),mascotas.length?h('div',{class:'persona-animales'},...mascotas.map(m=>h('span',{},m.nombre+' · '+m.especie))):nota('Todavía no hay mascotas reales registradas. Los perfiles de ejemplo no cuentan.'),h('a',{href:'#mascota',class:'chip'},'Gestionar mis mascotas')),h('button',{type:'submit',class:'btn',disabled:!mascotas.length},'Guardar perfil'));
   refrescar();
-  return h('section',{class:'persona-pagina'},h('header',{class:'persona-cabecera'},h('h1',{},'Mi perfil'),nota('Tu identidad en Mimo. Prototipo local, sin cuentas ni verificación real.')),card(h('div',{class:'persona-identidad'},foto(p),h('div',{},h('h2',{},visible.nombre),visible.activo?h('p',{},`${visible.edad} años`):nota('Perfil pendiente de completar'),visible.activo?h('div',{class:'persona-animales'},...visible.roles.map(r=>h('span',{},r))):null)),nota('Vista visible: nombre, apellido, edad, foto y opciones de colaboración guardadas. La ficha de vivienda es privada.')),!mascotas.length?card(nota('Para activar tu perfil, registrá al menos una mascota propia.'),h('a',{class:'btn',href:'#mascota'},'Registrar mascota')):null,form);
+  return h('section',{class:'persona-pagina'},h('header',{class:'persona-cabecera'},h('h1',{},'Mi perfil'),nota('Tu identidad en Mimo. Prototipo local, sin cuentas ni verificación real.')),card(h('div',{class:'persona-identidad'},avatarEditor,h('div',{},h('h2',{},visible.nombre),visible.activo?h('p',{},`${visible.edad} años`):nota('Perfil pendiente de completar'),visible.ubicacion?h('p',{class:'suave'},`${visible.ubicacion.ciudad} · ${visible.ubicacion.provincia} · ${visible.ubicacion.nombrePais}`):null,visible.activo?h('div',{class:'persona-animales'},...visible.roles.map(r=>h('span',{},r))):null)),nota('Vista visible: nombre, apellido, edad, foto, ciudad, provincia, país y opciones de colaboración guardadas. Las coordenadas y la ficha de vivienda son privadas.')),!mascotas.length?card(nota('Para activar tu perfil, registrá al menos una mascota propia.'),h('a',{class:'btn',href:'#mascota'},'Registrar mascota')):null,form);
  }
  return {vista,limpiar};
 }

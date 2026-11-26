@@ -24,3 +24,9 @@
 .persona-entrevista[hidden]{display:none}
 .persona-form>.btn{justify-self:start}
 @media(max-width:560px){.persona-campos,.persona-roles{grid-template-columns:1fr}.persona-card,.persona-entrevista{padding:1rem}.persona-form>.btn{width:100%}}
+
+/* Cámara superpuesta sobre el avatar, sin alterar el círculo. */
+.persona-avatar-editor{position:relative;flex:none;width:86px;height:86px;margin:0 .45rem .45rem 0}
+.persona-camara{position:absolute;right:-.3rem;bottom:-.3rem;width:36px;height:36px;border:2px solid #fff;border-radius:50%;background:var(--uva);color:white;display:grid;place-items:center;font-size:1rem;line-height:1;cursor:pointer;box-shadow:0 2px 5px #1e154640}
+.persona-avatar-editor input[hidden]{display:none}
+.persona-gps-acciones{display:flex;gap:.65rem;flex-wrap:wrap;align-items:center}

@@ -5,9 +5,9 @@ import { crearVistaMascotas, limpiarMedios } from './perfiles.js?v=8'
 import { crearVistaGuardias } from './guardias.js?v=8'
 import { crearAyuda } from './ayuda.js?v=8'
 import { crearBiblioteca } from './biblioteca.js'
-import { crearComunidad } from './comunidad.js?v=8'
+import { crearComunidad } from './comunidad.js?v=9'
 
-import { crearPersona, mascotasReales } from './usuario.js?v=8'
+import { crearPersona, mascotasReales } from './usuario.js?v=9'
 
 /* ───────── Estado ───────── */
 const estado = {

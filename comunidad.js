@@ -2,7 +2,7 @@
 import { h } from './seguridad.js';
 import { POSTS } from './datos.js';
 import { avatar, huella, nuevoId } from './mascotas.js?v=8';
-import { perfilVisible } from './usuario.js?v=8';
+import { perfilVisible } from './usuario.js?v=9';
 import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js';
 const KEY='mimo_comunidad_v1';
 const filtros=['Todo','Siguiendo','Reels','Guardados','Mis publicaciones'];
