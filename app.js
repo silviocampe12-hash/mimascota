@@ -8,6 +8,8 @@ import { crearBiblioteca } from './biblioteca.js'
 import { crearComunidad } from './comunidad.js?v=9'
 
 import { crearPersona, mascotasReales } from './usuario.js?v=9'
+import { esAdminDemo, accesoRuta, crearAdmin } from './admin.js?v=10'
+import { crearEspeciales } from './perfiles-especiales.js?v=10'
 
 /* ───────── Estado ───────── */
 const estado = {
@@ -22,6 +24,8 @@ const ayuda = crearAyuda(render)
 const biblioteca = crearBiblioteca(render)
 const comunidad = crearComunidad(render)
 const persona = crearPersona(render)
+const admin = crearAdmin(render)
+const especiales = crearEspeciales(render)
 const agregar = (clave, item) => { guardar(clave, [...leer(clave, []), item].slice(-50)); estado.productos.push(item); render() }
 
 /* ───────── Piezas reutilizables ───────── */
@@ -41,7 +45,10 @@ const vistas = {
 
   mascota: perfiles.vista,
 
-  urgencias: vistaGuardias,
+  urgencias: () => h('section', {class:'mimo-pila'}, h('a',{class:'chip especial-enlace',href:'#profesionales'},'Directorio de profesionales'), vistaGuardias()),
+  profesionales: especiales.veterinarios,
+  rescatistas: especiales.rescatistas,
+  admin,
 
   catalogo: () => {
     const marcas = [...new Set(estado.productos.map((p) => p.marca))]
@@ -87,16 +94,20 @@ function render() {
   persona.limpiar()
   const solicitada = location.hash.slice(1)
   let ruta = Object.hasOwn(vistas, solicitada) ? solicitada : 'mascota'
-  // La configuración inicial queda accesible; los ejemplos no habilitan el resto de la app.
-  if (!['mascota','persona'].includes(ruta)) {
-    let tieneMascota = false
-    try { tieneMascota = mascotasReales().length > 0 } catch {}
-    if (!tieneMascota) { ruta = 'persona'; history.replaceState(null, '', '#persona') }
-  }
+  // El modo de prueba no cambia el perfil ni concede permisos reales.
+  const administrador = esAdminDemo()
+  let tieneMascota = false
+  try { tieneMascota = mascotasReales().length > 0 } catch {}
+  const permitido = accesoRuta(ruta,tieneMascota,administrador)
+  const enlaceAdmin = document.getElementById('nav-admin')
+  if (enlaceAdmin) enlaceAdmin.hidden = !administrador
   mapa?.remove(); mapa = undefined
-  document.getElementById('vista').replaceChildren(vistas[ruta]())
+  const contenido = permitido ? vistas[ruta]() : h('section',{class:'mimo-pila'},
+    h('h1',{},'Completá tu registro'),h('p',{class:'pronto'},'Para acceder a esta sección, primero registrá una mascota propia. Los ejemplos no cuentan.'),
+    h('div',{class:'fila'},h('a',{class:'btn',href:'#mascota'},'Registrar mascota'),h('a',{class:'chip',href:'#persona'},'Mi perfil')))
+  document.getElementById('vista').replaceChildren(contenido)
   document.querySelectorAll('.dock a').forEach((a) => a.classList.toggle('activa', a.hash === `#${ruta}` && !a.classList.contains('marca')))
-  if (ruta === 'mapa') iniciarMapa()
+  if (permitido && ruta === 'mapa') iniciarMapa()
 }
 
 addEventListener('hashchange', () => { render(); scrollTo(0, 0) })

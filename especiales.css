@@ -1,0 +1,15 @@
+/* Directorios y administración, sin modificar el diseño general. */
+.especial-pagina{max-width:60rem;margin:auto}
+.especial-card{background:#fff;border:1px solid #ded9f3;border-radius:1.25rem;padding:1.2rem;display:grid;gap:.75rem;min-width:0;overflow-wrap:anywhere}
+.especial-card h2,.especial-card h3{margin:0}
+.especial-identidad{display:flex;align-items:center;gap:.8rem}
+.especial-avatar{display:grid;place-items:center;width:3.5rem;height:3.5rem;flex:none;border-radius:50%;background:var(--menta);font-size:1.5rem;font-weight:800}
+.especial-form{display:grid;gap:.85rem;margin:0}
+.especial-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:.8rem}
+.especial-checks{display:grid;gap:.35rem;border:1px solid #ded9f3;border-radius:1rem;padding:.75rem}
+.especial-enlace{justify-self:start;text-decoration:none}
+.especial-buscar{margin:0;display:flex;gap:.6rem;flex-wrap:wrap}
+.especial-buscar input{flex:1;min-width:12rem}
+.especial-card>.btn,.especial-card>.chip{justify-self:start;text-decoration:none}
+.dock a[hidden]{display:none}
+.admin-indicador{border:1px solid #dff35b}
