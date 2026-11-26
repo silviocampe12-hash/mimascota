@@ -2,7 +2,6 @@
 import { h } from './seguridad.js';
 import { cargarMascotas, nuevoId, fechaLocal } from './mascotas.js';
 import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js';
-const roles = ['Dueño de mascotas','Adoptante','Interesado en adoptar','Hogar provisorio (provi)','Padrino o madrina','Voluntario','Rescatista','Refugio o protectora','Profesional veterinario'];
 const opcionesAyuda = ['Adopción','Hogar provisorio','Apadrinamiento','Insumos','Traslado'];
 const key = 'mimo_ayuda_v1';
 const card = (...c) => h('article',{class:'tarjeta'},...c);
@@ -127,9 +126,5 @@ export function crearAyuda(render) {
     if(fallo)return error();const items=filtrar([...data.rescates,...demoRescates],qRescate).filter(a=>tabRescate==='Todas'||a.ayudas.includes(tabRescate));
     return pila(h('h1',{},'Adopción y ayuda'),nota('Prototipo: no procesa dinero, solicitudes reales ni verifica rescatistas.'),tabs(['Todas',...opcionesAyuda],tabRescate,x=>tabRescate=x),buscador(qRescate,x=>qRescate=x),h('div',{class:'grilla'},items.length?items.map(rescateCard):nota('Sin resultados.')),card(h('h2',{},'Mis intereses'),data.intereses.length?data.intereses.map(x=>fila(h('p',{},`${x.nombre} · ${x.tipo}`),btn('Retirar',intentar(()=>{cambiar('intereses',data.intereses.filter(i=>i.id!==x.id));render();})) )):nota('Todavía no registraste intereses.')),editorRescate());
   }
-  function persona() {
-    if(fallo)return error();const p=data.persona;
-    return pila(h('h1',{},'Mi perfil'),nota('Perfil local. Las funciones profesionales y de rescate requieren verificación futura.'),card(form([campo('nombre','Nombre visible',p.nombre),checks('roles',roles,p.roles),h('fieldset',{},h('legend',{},'Roles que deseo mostrar públicamente'),roles.map(r=>h('label',{class:'fila'},h('input',{name:'publicos',type:'checkbox',value:r,checked:p.publicos.includes(r)}),r)))],f=>{const elegidos=f.getAll('roles').filter(x=>roles.includes(x));save({...data,persona:{nombre:limpiar(f.get('nombre')),roles:elegidos,publicos:f.getAll('publicos').filter(x=>elegidos.includes(x))}});render();})),card(h('h2',{},'Vista pública de ejemplo'),h('p',{},p.nombre||'Sin nombre'),h('p',{},p.publicos.join(' · ')||'No hay roles públicos'),nota('Roles autodeclarados, no verificados.')));
-  }
-  return {perdidos,rescates,persona,social:()=>fallo?[]:data.avisos.filter(a=>a.social&&a.estado==='Abierto').map(a=>avisoCard(a,true)),limpiar:()=>{for(const u of urls)URL.revokeObjectURL(u);urls.clear();}};
+  return {perdidos,rescates,social:()=>fallo?[]:data.avisos.filter(a=>a.social&&a.estado==='Abierto').map(a=>avisoCard(a,true)),limpiar:()=>{for(const u of urls)URL.revokeObjectURL(u);urls.clear();}};
 }

@@ -3,6 +3,7 @@ import { h } from './seguridad.js';
 import { avatar, huella } from './mascota.js';
 import { POSTS } from './datos.js';
 import { nuevoId } from './mascotas.js';
+import { perfilVisible } from './usuario.js?v=7';
 import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js';
 const KEY='mimo_comunidad_v1';
 const filtros=['Todo','Siguiendo','Reels','Guardados','Mis publicaciones'];
@@ -23,13 +24,13 @@ export function cargarComunidad(){
 }
 // Las publicaciones de otros módulos se proyectan sin copiar la historia clínica ni la galería privada.
 export function fuentes(){
-  const perfil=leer('mimo_ayuda_v1',{})?.persona||{};
+  const perfil=perfilVisible();
   const mascotas=lista(leer('mimo_mascotas',[]));
   const nombre=texto(perfil.nombre,80)||'Mi perfil';
-  const roles=lista(perfil.publicos).filter(x=>lista(perfil.roles).includes(x));
-  const galeria=mascotas.flatMap(m=>lista(m.galeria).filter(a=>a.compartido===true).map(a=>({id:'gal:'+m.id+':'+a.id,autor:nombre,autorId:'local',roles,mascota:m.nombre,avatarPet:m,fecha:a.creadoEn,formato:a.tipo?.startsWith('video/')?'Video':'Fotos',texto:a.descripcion||'',media:[{id:a.id,tipo:a.tipo}],origen:'galeria',propio:true,visibilidad:'Comunidad'})));
+  const roles=perfil.roles;
+  const galeria=mascotas.flatMap(m=>lista(m.galeria).filter(a=>a.compartido===true).map(a=>({id:'gal:'+m.id+':'+a.id,autor:nombre,autorId:'local',roles,fotoPersona:perfil.fotoId,mascota:m.nombre,avatarPet:m,fecha:a.creadoEn,formato:a.tipo?.startsWith('video/')?'Video':'Fotos',texto:a.descripcion||'',media:[{id:a.id,tipo:a.tipo}],origen:'galeria',propio:true,visibilidad:'Comunidad'})));
   const demos=POSTS.map(p=>({id:'demo:'+p.id,autor:p.autor,autorId:'demo:'+p.id,mascota:p.autor,avatarPet:p,formato:'Texto',texto:p.texto,media:[],demo:true,baseLikes:p.likes,visibilidad:'Comunidad'}));
-  return {nombre,roles,mascotas,externos:[...galeria,...demos]};
+  return {nombre,roles,mascotas,perfil,externos:[...galeria,...demos]};
 }
 export function filtrarFeed(posts,estado,filtro,q=''){
   const norm=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -89,11 +90,13 @@ export function crearComunidad(render){
   }
   function autor(p){
     const pet=p.avatarPet;const foto=pet?.fotoPrincipalId&&lista(pet.galeria).some(a=>a.id===pet.fotoPrincipalId&&a.compartido===true); // nunca expone la foto privada del perfil
-    const img=foto?h('div',{class:'social-avatar'},medio({id:pet.fotoPrincipalId,tipo:'image/jpeg'},false)):pet&&['perro','gato'].includes(String(pet.tipo||pet.especie).toLowerCase())?avatar({...pet,tipo:String(pet.tipo||pet.especie).toLowerCase()},true):h('span',{class:'social-avatar social-inicial','aria-hidden':'true'},(p.autor||'M').slice(0,1).toUpperCase());
+    const img=p.fotoPersona?h('div',{class:'social-avatar'},medio({id:p.fotoPersona,tipo:'image/jpeg'},false)):foto?h('div',{class:'social-avatar'},medio({id:pet.fotoPrincipalId,tipo:'image/jpeg'},false)):pet&&['perro','gato'].includes(String(pet.tipo||pet.especie).toLowerCase())?avatar({...pet,tipo:String(pet.tipo||pet.especie).toLowerCase()},true):h('span',{class:'social-avatar social-inicial','aria-hidden':'true'},(p.autor||'M').slice(0,1).toUpperCase());
     return h('div',{class:'social-autor'},img,h('div',{},h('strong',{},p.autor),p.mascota&&p.mascota!==p.autor?h('p',{class:'social-mascota'},'Con '+p.mascota):null,nota(p.demo?'Perfil ficticio':`${fecha(p.fecha)} · ${p.visibilidad==='Privada'?'Solo yo':'Publicación local'}`),p.roles?.length?nota(p.roles.join(' · ')+' (autodeclarado)'):null),!p.propio?btn(estado.siguiendo.includes(p.autorId)?'Siguiendo':'Seguir',toggle('siguiendo',p.autorId),{'aria-pressed':String(estado.siguiendo.includes(p.autorId))}):null);
   }
   function editor(ctx){
     const p=estado.posts.find(x=>x.id===editId);
+    if(!ctx.perfil.activo)return card(h('h2',{},'Crear publicación'),nota('Completá tu perfil personal y registrá una mascota real para publicar.'),h('a',{class:'btn',href:'#persona'},'Completar mi perfil'));
+    ctx={...ctx,mascotas:ctx.mascotas.filter(m=>!m.demo)};
     if(!ctx.mascotas.length)return card(h('h2',{},'Crear publicación'),nota('Para publicar, primero registrá una mascota.'),h('a',{class:'btn',href:'#mascota'},'Ir a Mis mascotas'));
     // La mascota única se asigna automáticamente; con varias se muestra un selector obligatorio.
     const seleccion=ctx.mascotas.find(m=>m.id===p?.mascotaId)?.id||ctx.mascotas[0].id;
@@ -158,7 +161,7 @@ export function crearComunidad(render){
   }
   function vista(){
     if(fallo)return card(h('h1',{},'Comunidad'),nota('No se pudieron leer tus datos: '+fallo));
-    const ctx=fuentes(), propios=estado.posts.map(p=>{const m=ctx.mascotas.find(x=>x.id===p.mascotaId);return {...p,autor:ctx.nombre,roles:ctx.roles,mascota:m?.nombre,avatarPet:m};});const posts=filtrarFeed([...propios,...ctx.externos],estado,filtro,q);
+    const ctx=fuentes(), propios=estado.posts.map(p=>{const m=ctx.mascotas.find(x=>x.id===p.mascotaId);return {...p,autor:ctx.nombre,roles:ctx.roles,fotoPersona:ctx.perfil.fotoId,mascota:m?.nombre,avatarPet:m};});const posts=filtrarFeed([...propios,...ctx.externos],estado,filtro,q);
     return h('section',{class:'social-feed'},h('header',{class:'social-cabecera'},h('h1',{},'Comunidad'),nota('Compartí el día a día de tus mascotas. Prototipo local.')),editor(ctx),h('nav',{class:'social-tabs','aria-label':'Filtros de Comunidad'},filtros.map(t=>btn(t,()=>{filtro=t;comentando=null;render();},{'aria-pressed':String(t===filtro)}))),h('div',{class:'social-busqueda'},h('form',{onsubmit:e=>{e.preventDefault();q=texto(new FormData(e.currentTarget).get('q'),100);render();}},h('input',{type:'search',name:'q',value:q,placeholder:'Buscar publicaciones','aria-label':'Buscar publicaciones'}),h('button',{class:'btn',type:'submit'},'Buscar'))),estado.ocultos.length?btn('Restaurar publicaciones ocultas',intentar(()=>{cambiar('ocultos',[]);render();})):null,posts.length?posts.map(p=>publicacion(p,ctx)):card(nota('No hay publicaciones para mostrar con estos filtros.')));
   }
   return {vista,limpiar};

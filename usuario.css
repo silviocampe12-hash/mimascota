@@ -1,0 +1,26 @@
+/* Perfil personal: estilos aislados para no modificar el resto de Mimo. */
+.persona-pagina{max-width:760px;margin:auto;display:grid;gap:1.25rem}
+.persona-cabecera{display:grid;gap:.45rem;margin-bottom:.2rem}
+.persona-card,.persona-entrevista{background:#fff;border:1px solid #ded9f3;border-radius:1.4rem;padding:1.25rem;display:grid;gap:.9rem;box-shadow:0 3px 0 #1e154614;min-width:0}
+.persona-card h2,.persona-entrevista h2{margin:0;font-size:1.45rem}
+.persona-identidad{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.persona-foto{width:86px;height:86px;flex:none;border-radius:50%;background:var(--menta);color:var(--tinta);display:grid;place-items:center;overflow:hidden;font-size:2rem;font-weight:800}
+.persona-foto img{width:100%;height:100%;object-fit:cover}
+.persona-foto-control{flex:1;min-width:0;display:grid;gap:.5rem}
+.persona-foto-control input{max-width:100%;width:100%}
+.persona-form{display:grid;gap:1rem;margin:0;min-width:0}
+.persona-campos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
+.persona-campos label:has(textarea){grid-column:1/-1}
+.persona-campos textarea{font:inherit;color:inherit;border:1px solid #bcb5db;border-radius:.8rem;padding:.65rem;resize:vertical;width:100%;min-width:0}
+.persona-campos input,.persona-campos select{width:100%;min-width:0}
+.persona-roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+.persona-rol{padding:.85rem;border:1px solid #ded9f3;border-radius:1rem;display:grid;gap:.3rem}
+.persona-base{background:var(--menta);border-color:transparent}
+.persona-check{display:flex;align-items:center;gap:.65rem;font-weight:600;cursor:pointer}
+.persona-check input{accent-color:var(--uva);width:1.15rem;height:1.15rem;flex:none}
+.persona-aviso{font-size:.85rem;color:var(--tinta)}
+.persona-animales{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.3rem}
+.persona-animales span{background:var(--fondo);border-radius:99px;padding:.35rem .7rem;font-size:.87rem}
+.persona-entrevista[hidden]{display:none}
+.persona-form>.btn{justify-self:start}
+@media(max-width:560px){.persona-campos,.persona-roles{grid-template-columns:1fr}.persona-card,.persona-entrevista{padding:1rem}.persona-form>.btn{width:100%}}

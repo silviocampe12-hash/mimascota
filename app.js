@@ -3,9 +3,11 @@ import { h, limpiar, numero, leer, guardar } from './seguridad.js'
 import { VETS, PRODUCTOS } from './datos.js'
 import { crearVistaMascotas, limpiarMedios } from './perfiles.js'
 import { crearVistaGuardias } from './guardias.js'
-import { crearAyuda } from './ayuda.js?v=6'
+import { crearAyuda } from './ayuda.js?v=7'
 import { crearBiblioteca } from './biblioteca.js'
-import { crearComunidad } from './comunidad.js?v=6'
+import { crearComunidad } from './comunidad.js?v=7'
+
+import { crearPersona, mascotasReales } from './usuario.js?v=7'
 
 /* ───────── Estado ───────── */
 const estado = {
@@ -19,6 +21,7 @@ const vistaGuardias = crearVistaGuardias(render)
 const ayuda = crearAyuda(render)
 const biblioteca = crearBiblioteca(render)
 const comunidad = crearComunidad(render)
+const persona = crearPersona(render)
 const agregar = (clave, item) => { guardar(clave, [...leer(clave, []), item].slice(-50)); estado.productos.push(item); render() }
 
 /* ───────── Piezas reutilizables ───────── */
@@ -59,7 +62,7 @@ const vistas = {
 
   perdidos: ayuda.perdidos,
   ayuda: ayuda.rescates,
-  persona: ayuda.persona,
+  persona: persona.vista,
   biblioteca,
 
 }
@@ -81,8 +84,15 @@ function render() {
   limpiarMedios()
   ayuda.limpiar()
   comunidad.limpiar()
+  persona.limpiar()
   const solicitada = location.hash.slice(1)
-  const ruta = Object.hasOwn(vistas, solicitada) ? solicitada : 'mascota'
+  let ruta = Object.hasOwn(vistas, solicitada) ? solicitada : 'mascota'
+  // La configuración inicial queda accesible; los ejemplos no habilitan el resto de la app.
+  if (!['mascota','persona'].includes(ruta)) {
+    let tieneMascota = false
+    try { tieneMascota = mascotasReales().length > 0 } catch {}
+    if (!tieneMascota) { ruta = 'persona'; history.replaceState(null, '', '#persona') }
+  }
   mapa?.remove(); mapa = undefined
   document.getElementById('vista').replaceChildren(vistas[ruta]())
   document.querySelectorAll('.dock a').forEach((a) => a.classList.toggle('activa', a.hash === `#${ruta}` && !a.classList.contains('marca')))
