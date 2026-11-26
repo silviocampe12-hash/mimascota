@@ -3,9 +3,9 @@ import { h, limpiar, numero, leer, guardar } from './seguridad.js'
 import { VETS, PRODUCTOS } from './datos.js'
 import { crearVistaMascotas, limpiarMedios } from './perfiles.js'
 import { crearVistaGuardias } from './guardias.js'
-import { crearAyuda } from './ayuda.js'
+import { crearAyuda } from './ayuda.js?v=6'
 import { crearBiblioteca } from './biblioteca.js'
-import { crearComunidad } from './comunidad.js?v=5'
+import { crearComunidad } from './comunidad.js?v=6'
 
 /* ───────── Estado ───────── */
 const estado = {
