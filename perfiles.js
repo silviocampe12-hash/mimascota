@@ -1,6 +1,6 @@
-import { h } from './seguridad.js';
-import { avatar, COLORES, crearMascota,cargarMascotas,guardarMascotas,obtenerMascotaSeleccionadaId,guardarMascotaSeleccionadaId,nuevoId,fechaLocal,eliminarMascota } from './mascotas.js?v=8';
-import { validarArchivo,guardarArchivo,leerArchivo,borrarArchivo } from './multimedia.js';
+import { h } from './seguridad.js?v=11';
+import { avatar, COLORES, crearMascota,cargarMascotas,guardarMascotas,obtenerMascotaSeleccionadaId,guardarMascotaSeleccionadaId,nuevoId,fechaLocal,eliminarMascota } from './mascotas.js?v=11';
+import { validarArchivo,guardarArchivo,leerArchivo,borrarArchivo } from './multimedia.js?v=11';
 const H = h, boton = (texto,fn,clase='btn') => H('button',{type:'button',class:clase,onclick:fn},texto);
 const card = (...hijos) => H('article',{class:'tarjeta'},...hijos);
 const fila = (...hijos) => H('div',{class:'fila'},...hijos);

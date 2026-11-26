@@ -1,5 +1,6 @@
+import { almacen } from './almacenamiento.js?v=11';
 // Modelo de datos: una colección local de mascotas independientes.
-import { esColor } from './seguridad.js';
+import { esColor } from './seguridad.js?v=11';
 const KEY = 'mimo_mascotas', SELECTED = 'mimo_mascota_seleccionada';
 export const nuevoId = () => crypto.randomUUID?.() ?? `mimo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 export const fechaLocal = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -24,20 +25,20 @@ function demos() {
     crearMascota({nombre:'Toby',especie:'perro',raza:'Mestizo',edad:5,peso:12,demo:true,c1:'#8B5E3C',sobreMi:'Perfil ficticio.',actividades:[{id:nuevoId(),tipo:'Paseo',fecha:hoy,duracion:30,distancia:2,intensidad:'Moderada'}]})];
 }
 export function cargarMascotas() {
-  const actual = localStorage.getItem(KEY);
+  const actual = almacen.getItem(KEY);
   if (actual !== null) {
     const datos = JSON.parse(actual);
     if (!Array.isArray(datos)) throw new Error('Colección de mascotas inválida');
     const perfiles = datos.map(crearMascota);
     guardarMascotas(perfiles); return perfiles;
   }
-  const anterior = JSON.parse(localStorage.getItem('mascota') || 'null');
+  const anterior = JSON.parse(almacen.getItem('mascota') || 'null');
   const perfiles = anterior ? [crearMascota(anterior)] : demos();
   guardarMascotas(perfiles); return perfiles;
 }
-export const guardarMascotas = mascotas => localStorage.setItem(KEY, JSON.stringify(mascotas));
-export const obtenerMascotaSeleccionadaId = () => localStorage.getItem(SELECTED);
-export const guardarMascotaSeleccionadaId = id => id ? localStorage.setItem(SELECTED,id) : localStorage.removeItem(SELECTED);
+export const guardarMascotas = mascotas => almacen.setItem(KEY, JSON.stringify(mascotas));
+export const obtenerMascotaSeleccionadaId = () => almacen.getItem(SELECTED);
+export const guardarMascotaSeleccionadaId = id => id ? almacen.setItem(SELECTED,id) : almacen.removeItem(SELECTED);
 export const eliminarMascota = (mascotas,id) => mascotas.filter(m => m.id !== id);
 
 // Avatares, colores y huellitas

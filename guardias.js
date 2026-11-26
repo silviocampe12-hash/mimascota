@@ -1,6 +1,7 @@
+import { almacen } from './almacenamiento.js?v=11';
 // Mimo: guardias veterinarias. Prototipo local, sin verificación profesional.
-import { h } from './seguridad.js';
-import { nuevoId } from './mascotas.js?v=8';
+import { h } from './seguridad.js?v=11';
+import { nuevoId } from './mascotas.js?v=11';
 const KEY = 'mimo_guardias_v1';
 const ZONA = 'America/Argentina/Buenos_Aires';
 const formato = new Intl.DateTimeFormat('es-AR',{timeZone:ZONA,dateStyle:'short',timeStyle:'short'});
@@ -39,12 +40,12 @@ const mostrarFecha=v=>formato.format(instante(v));
 export function crearVistaGuardias(render) {
   let guardias=[], error='', gestion=false, editId=null;
   try {
-    const datos=JSON.parse(localStorage.getItem(KEY)||'[]');
+    const datos=JSON.parse(almacen.getItem(KEY)||'[]');
     if(!Array.isArray(datos)) throw Error('Datos de guardias inválidos.');
     guardias=datos;
   } catch(e) { error=e.message; }
   function persistir(nuevas) {
-    localStorage.setItem(KEY,JSON.stringify(nuevas));
+    almacen.setItem(KEY,JSON.stringify(nuevas));
     guardias=nuevas;
   }
   function guardar(d) {

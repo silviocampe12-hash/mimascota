@@ -1,13 +1,14 @@
+import { almacen } from './almacenamiento.js?v=11';
 // Feed local: los archivos nuevos viven en IndexedDB y las publicaciones en localStorage.
-import { h } from './seguridad.js';
+import { h } from './seguridad.js?v=11';
 import { POSTS } from './datos.js';
-import { avatar, huella, nuevoId } from './mascotas.js?v=8';
-import { perfilVisible } from './usuario.js?v=9';
-import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js';
+import { avatar, huella, nuevoId } from './mascotas.js?v=11';
+import { perfilVisible } from './usuario.js?v=11';
+import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js?v=11';
 const KEY='mimo_comunidad_v1';
 const filtros=['Todo','Siguiendo','Reels','Guardados','Mis publicaciones'];
 const lista=x=>Array.isArray(x)?x:[];
-const leer=(k,def)=>{try{return JSON.parse(localStorage.getItem(k))??def;}catch{return def;}};
+const leer=(k,def)=>{try{return JSON.parse(almacen.getItem(k))??def;}catch{return def;}};
 const texto=(x,n=2000)=>String(x??'').trim().slice(0,n);
 const fecha=x=>{const d=new Date(x);return Number.isFinite(+d)?d.toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}):'Sin fecha';};
 const btn=(label,fn,props={})=>h('button',{type:'button',class:'social-accion',onclick:fn,...props},label);
@@ -18,7 +19,7 @@ const option=(v,sel,t=v)=>h('option',{value:v,selected:v===sel},t);
 const label=(t,el)=>h('label',{class:'mimo-campo'},t,el);
 const inicial=()=>({posts:[],likes:[],guardados:[],siguiendo:[],ocultos:[],comentarios:[],denuncias:[]});
 export function cargarComunidad(){
-  const raw=localStorage.getItem(KEY);if(raw===null)return inicial();
+  const raw=almacen.getItem(KEY);if(raw===null)return inicial();
   const d=JSON.parse(raw);if(!d||!Object.keys(inicial()).every(k=>Array.isArray(d[k])))throw Error('Datos de Comunidad inválidos.');return d;
 }
 // Las publicaciones de otros módulos se proyectan sin copiar la historia clínica ni la galería privada.
@@ -79,7 +80,7 @@ export function crearComunidad(render){
   try{estado=cargarComunidad();}catch(e){fallo=e.message;}
   const urls=new Set();
   const limpiar=()=>{for(const u of urls)URL.revokeObjectURL(u);urls.clear();};
-  const guardar=next=>{localStorage.setItem(KEY,JSON.stringify(next));estado=next;};
+  const guardar=next=>{almacen.setItem(KEY,JSON.stringify(next));estado=next;};
   const cambiar=(k,v)=>guardar({...estado,[k]:v});
   const intentar=fn=>async(...args)=>{try{await fn(...args);}catch(e){alert(e.message||String(e));}};
   const toggle=(k,id)=>intentar(()=>{cambiar(k,estado[k].includes(id)?estado[k].filter(x=>x!==id):[...estado[k],id]);render();});

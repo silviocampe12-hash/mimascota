@@ -1,5 +1,6 @@
+import { almacen } from './almacenamiento.js?v=11';
 // Biblioteca de Mimo: fichas editoriales con referencias, sin aportes públicos automáticos.
-import { h } from './seguridad.js';
+import { h } from './seguridad.js?v=11';
 const KEY='mimo_biblioteca_favoritos';
 const revision='Pendiente de revisión profesional en Mimo';
 // Cada artículo conserva su especie, categoría, texto y fuente externa.
@@ -52,18 +53,18 @@ export function buscarArticulos(q='',especie='Todas',tema='Todos') {
 }
 export function crearBiblioteca(render) {
   let q='',especie='Todas',tema='Todos',soloFavoritos=false,abierto=null,favs=[];
-  try {const x=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(x))favs=x;}catch{}
+  try {const x=JSON.parse(almacen.getItem(KEY)||'[]');if(Array.isArray(x))favs=x;}catch{}
   const btn=(t,fn)=>h('button',{class:'chip',type:'button',onclick:fn},t);
   const card=(...c)=>h('article',{class:'tarjeta'},...c);
   const selector=(label,opts,valor,fn)=>h('label',{class:'mimo-campo'},label,h('select',{onchange:e=>{fn(e.target.value);abierto=null;render();}},opts.map(x=>h('option',{value:x,selected:x===valor},x))));
   function favorito(id) {
     const next=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];
-    try{localStorage.setItem(KEY,JSON.stringify(next));favs=next;render();}catch(e){alert('No se pudieron guardar los favoritos.');}
+    try{almacen.setItem(KEY,JSON.stringify(next));favs=next;render();}catch(e){alert('No se pudieron guardar los favoritos.');}
   }
   function sugerir(a) {
     const texto=prompt('¿Qué información habría que revisar? No incluyas datos personales ni clínicos.');
     if(!texto?.trim())return;
-    try {const k='mimo_biblioteca_correcciones',prev=JSON.parse(localStorage.getItem(k)||'[]');localStorage.setItem(k,JSON.stringify([...prev,{articulo:a.id,texto:texto.trim().slice(0,1000),fecha:new Date().toISOString()}]));alert('Sugerencia guardada localmente. Aún no se envía a un editor.');}catch(e){alert('No se pudo guardar la sugerencia.');}
+    try {const k='mimo_biblioteca_correcciones',prev=JSON.parse(almacen.getItem(k)||'[]');almacen.setItem(k,JSON.stringify([...prev,{articulo:a.id,texto:texto.trim().slice(0,1000),fecha:new Date().toISOString()}]));alert('Sugerencia guardada localmente. Aún no se envía a un editor.');}catch(e){alert('No se pudo guardar la sugerencia.');}
   }
   function articulo(a) {
     return card(h('p',{class:'suave'},`${a.especie} · ${a.tema}`),h('h2',{},a.titulo),h('p',{},a.texto[0]),h('div',{class:'fila'},btn(abierto===a.id?'Cerrar artículo':'Leer artículo',()=>{abierto=abierto===a.id?null:a.id;render();}),btn(favs.includes(a.id)?'Quitar favorito':'Guardar favorito',()=>favorito(a.id))),abierto===a.id?h('div',{class:'mimo-pila'},a.texto.slice(1).map(t=>h('p',{},t)),h('p',{class:'suave'},a.revision),h('p',{class:'suave'},'Fuente consultada: 25/11/2026'),h('a',{href:a.url,target:'_blank',rel:'noopener noreferrer'},a.fuente),h('p',{class:'suave'},'Información general, no diagnóstico ni tratamiento.'),btn('Sugerir corrección',()=>sugerir(a))):null);

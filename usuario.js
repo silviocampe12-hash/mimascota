@@ -1,14 +1,15 @@
+import { almacen } from './almacenamiento.js?v=11';
 // Perfil personal local. Los expedientes de entrevista nunca forman parte del perfil visible.
-import { h } from './seguridad.js';
-import { nuevoId } from './mascotas.js?v=8';
-import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js';
+import { h } from './seguridad.js?v=11';
+import { nuevoId } from './mascotas.js?v=11';
+import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js?v=11';
 import { PAISES, ubicacionPublica, coordenadasValidas, validarUbicacion, capturarUbicacion } from './ubicacion.js?v=9';
 const KEY='mimo_persona_v1';
 export const DUENO='Dueño de mascotas';
 export const ROLES=['Adoptante','Hogar provisorio (provi)','Padrino o madrina','Voluntario'];
 const lista=x=>Array.isArray(x)?x:[];
 const texto=(x,n=200)=>String(x??'').trim().slice(0,n);
-const leer=(k,def)=>{const s=localStorage.getItem(k);return s===null?def:JSON.parse(s);};
+const leer=(k,def)=>{const s=almacen.getItem(k);return s===null?def:JSON.parse(s);};
 export const mascotasReales=()=>lista(leer('mimo_mascotas',[])).filter(m=>m&&!m.demo&&m.id);
 const rolesValidos=x=>ROLES.filter(r=>lista(x).includes(r));
 export const requiereVivienda=r=>r.includes(ROLES[0])||r.includes(ROLES[1]);
@@ -118,7 +119,7 @@ export function crearPersona(render){
     const vivienda=Object.fromEntries(camposPara(elegidos).map(([k])=>[k,d.get(k)]));
     const ubicacion={pais:d.get('pais'),provincia:d.get('provincia'),ciudad:d.get('ciudad'),gps};
     const next=validarPersona({nombre:d.get('nombre'),apellido:d.get('apellido'),edad:d.get('edad'),fotoId,roles:elegidos,vivienda,ubicacion},mascotasReales().length>0);
-    localStorage.setItem(KEY,JSON.stringify(next));persistido=true;
+    almacen.setItem(KEY,JSON.stringify(next));persistido=true;
     if(p.fotoId&&p.fotoId!==fotoId)await borrarArchivo(p.fotoId).catch(console.error);
     render();
    }catch(err){if(nuevo&&!persistido)await borrarArchivo(nuevo).catch(console.error);alert(err.message);}finally{b.disabled=false;}

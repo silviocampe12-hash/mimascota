@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://cdn.jsdelivr.net https://tile.openstreetmap.org https://*.tile.openstreetmap.org; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://cdn.jsdelivr.net https://tile.openstreetmap.org https://*.tile.openstreetmap.org; media-src 'self' blob:; connect-src 'self' https://okdyvneokhdmbvytnoin.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Mimo · todo para tu mascota</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,9 +13,10 @@
   <link rel="stylesheet" href="./comunidad.css?v=6">
   <link rel="stylesheet" href="./usuario.css?v=9">
   <link rel="stylesheet" href="./especiales.css?v=10">
+  <link rel="stylesheet" href="./acceso.css?v=11">
 </head>
 <body>
-  <nav class="dock" aria-label="Secciones">
+  <nav hidden class="dock" aria-label="Secciones">
     <a class="marca" href="#mascota">Mimo</a>
     <a href="#social">Comunidad</a>
     <a href="#mapa">Mapa</a>
@@ -27,11 +28,13 @@
     <a href="#rescatistas">Rescatistas</a>
     <a href="#biblioteca">Biblioteca</a>
     <a href="#persona">Mi perfil</a>
-    <a id="nav-admin" class="admin-indicador" href="#admin" hidden>Admin (prueba)</a>
+    <a id="nav-admin" class="admin-indicador" href="#admin" hidden>Admin</a>
     <a class="sos" href="#urgencias">Veterinarios</a>
+    <button type="button" id="cerrar-sesion" class="chip">Cerrar sesión</button>
   </nav>
   <main id="vista" tabindex="-1"></main>
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
- <script type="module" src="./app.js?v=10"></script>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0"></script>
+  <script type="module" src="./app.js?v=11"></script>
 </body>
 </html>

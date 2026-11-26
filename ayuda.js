@@ -1,7 +1,8 @@
+import { almacen } from './almacenamiento.js?v=11';
 // Mimo: avisos, rescates y perfil personal. Prototipo local sin permisos reales.
-import { h } from './seguridad.js';
-import { cargarMascotas, nuevoId, fechaLocal } from './mascotas.js?v=8';
-import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js';
+import { h } from './seguridad.js?v=11';
+import { cargarMascotas, nuevoId, fechaLocal } from './mascotas.js?v=11';
+import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js?v=11';
 const opcionesAyuda = ['Adopción','Hogar provisorio','Apadrinamiento','Insumos','Traslado'];
 const key = 'mimo_ayuda_v1';
 const card = (...c) => h('article',{class:'tarjeta'},...c);
@@ -18,12 +19,12 @@ const tel = v => /^\+[1-9]\d{7,14}$/.test(v)?v:'';
 const demoAvisos = [{id:'demo-perdido',tipo:'Perdida',nombre:'Luna',especie:'Gato',zona:'Barrio de ejemplo',fecha:fechaLocal(),detalle:'Pelaje claro. Aviso ficticio.',estado:'Abierto',demo:true},{id:'demo-encontrado',tipo:'Encontrada',nombre:'Sin identificar',especie:'Perro',zona:'Plaza de ejemplo',fecha:fechaLocal(),detalle:'Collar azul. Aviso ficticio.',estado:'Abierto',demo:true}];
 const demoRescates = [{id:'demo-rescate',nombre:'Benito',especie:'Perro',zona:'Localidad de ejemplo',detalle:'Animal ficticio en recuperación.',ayudas:['Adopción','Hogar provisorio','Apadrinamiento'],necesidad:'Alimento y controles',estado:'Activo',demo:true}];
 export function leerAyuda() {
-  const raw=localStorage.getItem(key);
+  const raw=almacen.getItem(key);
   if(raw===null) {
-    const anterior=JSON.parse(localStorage.getItem('perdidos')||'[]');
+    const anterior=JSON.parse(almacen.getItem('perdidos')||'[]');
     const avisos=Array.isArray(anterior)?anterior.map(x=>({id:nuevoId(),tipo:'Perdida',nombre:limpiar(x.nombre)||'Sin identificar',especie:limpiar(x.tipo),zona:limpiar(x.zona),fecha:limpiar(x.fecha),detalle:'Aviso importado: revisá los datos y autorizá el contacto de nuevo.',estado:'Abierto',social:false,contacto:''})):[];
     const inicial={avisos,rescates:[],persona:{nombre:'',roles:[],publicos:[]},denuncias:[],intereses:[]};
-    localStorage.setItem(key,JSON.stringify(inicial));return inicial;
+    almacen.setItem(key,JSON.stringify(inicial));return inicial;
   }
   const d=JSON.parse(raw);
   if(!d||!['avisos','rescates','denuncias','intereses'].every(k=>Array.isArray(d[k]))||!d.persona) throw Error('Datos locales inválidos.');
@@ -33,7 +34,7 @@ export const filtrar = (items,q) => items.filter(x=>[x.nombre,x.especie,x.zona,x
 export function crearAyuda(render) {
   let data,fallo='',tabAviso='Todos',tabRescate='Todas',qAviso='',qRescate='',editAviso=null,editRescate=null,borradorRescate=null;
   try { data=leerAyuda(); } catch(e) { fallo=e.message; }
-  const save = next => { localStorage.setItem(key,JSON.stringify(next)); data=next; };
+  const save = next => { almacen.setItem(key,JSON.stringify(next)); data=next; };
   const cambiar = (k,v) => save({...data,[k]:v});
   const upsert = (k,x) => cambiar(k,data[k].some(a=>a.id===x.id)?data[k].map(a=>a.id===x.id?x:a):[...data[k],x]);
   const intentar = fn => async (...args)=>{try{await fn(...args);}catch(e){alert(e.message);}};

@@ -1,8 +1,9 @@
+import { baseArchivos } from './almacenamiento.js?v=11';
 // IndexedDB guarda los archivos como Blob; localStorage conserva solo sus referencias.
 let conexion;
 function abrir() {
   return conexion ??= new Promise((resolve,reject) => {
-    const req = indexedDB.open('mimo_archivos',1);
+    const req = indexedDB.open(baseArchivos(),1);
     req.onupgradeneeded = () => req.result.createObjectStore('archivos',{keyPath:'id'});
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => { conexion = undefined; reject(req.error); };
