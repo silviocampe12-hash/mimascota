@@ -1,16 +1,16 @@
 // Mimo · router, estado y vistas
 import { h, limpiar, numero, leer, guardar } from './seguridad.js'
-import { avatar, huella } from './mascota.js'
-import { VETS, POSTS, PRODUCTOS } from './datos.js'
+import { VETS, PRODUCTOS } from './datos.js'
 import { crearVistaMascotas, limpiarMedios } from './perfiles.js'
 import { crearVistaGuardias } from './guardias.js'
 import { crearAyuda } from './ayuda.js'
 import { crearBiblioteca } from './biblioteca.js'
+import { crearComunidad } from './comunidad.js?v=5'
 
 /* ───────── Estado ───────── */
 const estado = {
   productos: [...PRODUCTOS, ...leer('productos', [])],
-  likes: new Set(), filtroMapa: 'Todos', marca: 'Todas',
+  filtroMapa: 'Todos', marca: 'Todas',
 }
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 
@@ -18,6 +18,7 @@ const perfiles = crearVistaMascotas(render)
 const vistaGuardias = crearVistaGuardias(render)
 const ayuda = crearAyuda(render)
 const biblioteca = crearBiblioteca(render)
+const comunidad = crearComunidad(render)
 const agregar = (clave, item) => { guardar(clave, [...leer(clave, []), item].slice(-50)); estado.productos.push(item); render() }
 
 /* ───────── Piezas reutilizables ───────── */
@@ -27,19 +28,7 @@ const chips = (lista, actual, alElegir) => h('div', { class: 'fila' }, lista.map
 
 /* ───────── Vistas ───────── */
 const vistas = {
-  social: () => h('section', {},
-    h('h1', {}, 'Comunidad'),
-    h('p', { class: 'suave' }, 'Comunidad de demostración: las publicaciones propias solo se ven en este navegador.'),
-    h('div', { class: 'grilla' }, perfiles.publicaciones()),
-    h('div', { class: 'grilla' }, ayuda.social()),
-    h('div', { class: 'grilla' }, POSTS.map((p) => {
-      const activo = estado.likes.has(p.id)
-      return h('article', { class: 'tarjeta' },
-        h('div', { class: 'fila' }, avatar(p, true), h('h3', {}, p.autor)),
-        h('p', {}, p.texto),
-        h('button', { class: 'me-gusta', 'aria-pressed': activo, onclick: () => { activo ? estado.likes.delete(p.id) : estado.likes.add(p.id); render() } },
-          huella(p.tipo), `${p.likes + (activo ? 1 : 0)}`))
-    }))),
+  social: comunidad.vista,
 
   mapa: () => h('section', {},
     h('h1', {}, 'Mapa'),
@@ -91,6 +80,7 @@ const iniciarMapa = () => {
 function render() {
   limpiarMedios()
   ayuda.limpiar()
+  comunidad.limpiar()
   const solicitada = location.hash.slice(1)
   const ruta = Object.hasOwn(vistas, solicitada) ? solicitada : 'mascota'
   mapa?.remove(); mapa = undefined
