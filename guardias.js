@@ -1,6 +1,6 @@
 // Mimo: guardias veterinarias. Prototipo local, sin verificación profesional.
 import { h } from './seguridad.js';
-import { nuevoId } from './mascotas.js';
+import { nuevoId } from './mascotas.js?v=8';
 const KEY = 'mimo_guardias_v1';
 const ZONA = 'America/Argentina/Buenos_Aires';
 const formato = new Intl.DateTimeFormat('es-AR',{timeZone:ZONA,dateStyle:'short',timeStyle:'short'});

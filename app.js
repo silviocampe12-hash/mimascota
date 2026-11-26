@@ -1,13 +1,13 @@
 // Mimo · router, estado y vistas
 import { h, limpiar, numero, leer, guardar } from './seguridad.js'
 import { VETS, PRODUCTOS } from './datos.js'
-import { crearVistaMascotas, limpiarMedios } from './perfiles.js'
-import { crearVistaGuardias } from './guardias.js'
-import { crearAyuda } from './ayuda.js?v=7'
+import { crearVistaMascotas, limpiarMedios } from './perfiles.js?v=8'
+import { crearVistaGuardias } from './guardias.js?v=8'
+import { crearAyuda } from './ayuda.js?v=8'
 import { crearBiblioteca } from './biblioteca.js'
-import { crearComunidad } from './comunidad.js?v=7'
+import { crearComunidad } from './comunidad.js?v=8'
 
-import { crearPersona, mascotasReales } from './usuario.js?v=7'
+import { crearPersona, mascotasReales } from './usuario.js?v=8'
 
 /* ───────── Estado ───────── */
 const estado = {

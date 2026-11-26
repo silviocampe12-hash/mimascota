@@ -1,6 +1,6 @@
 // Mimo: avisos, rescates y perfil personal. Prototipo local sin permisos reales.
 import { h } from './seguridad.js';
-import { cargarMascotas, nuevoId, fechaLocal } from './mascotas.js';
+import { cargarMascotas, nuevoId, fechaLocal } from './mascotas.js?v=8';
 import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js';
 const opcionesAyuda = ['Adopción','Hogar provisorio','Apadrinamiento','Insumos','Traslado'];
 const key = 'mimo_ayuda_v1';
