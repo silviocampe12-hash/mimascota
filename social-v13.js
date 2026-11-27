@@ -31,7 +31,7 @@ window.addEventListener('popstate',()=>{
 });
 logout.addEventListener('click',async()=>{stop();await sb.auth.signOut({scope:'local'});location.replace('./');});
 async function boot(){if(!sb)throw Error('No se pudo cargar Supabase.');const {session}=await resultado(sb.auth.getSession());if(!session){root.replaceChildren(card(h('h1',{},'Ingresá a Mimo'),note('Necesitás iniciar sesión con tu cuenta.'),h('a',{href:'./',class:'action'},'Iniciar sesión')));notice();return;}const x=await resultado(sb.auth.getUser());user=x.user;if(!user)throw Error('Sesión no válida');fijarCuenta(user.id);await prepararNube({importar:false});await sincronizarFotoPublica().catch(e=>console.warn('Miniatura pública no sincronizada',e));logout.hidden=false;const r=await resultado(sb.from('permisos').select('rol').eq('usuario_id',user.id).maybeSingle());admin=['administrador','superadministrador'].includes(r?.rol);profile=await rpc('mi_perfil');sb.auth.onAuthStateChange((event,s)=>{if(event==='SIGNED_OUT'||(s?.user?.id&&s.user.id!==user.id)){stop();location.replace('./');}});await render();}
-async function render(){stop();const g=generation;notice();document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));if(tab==='mensajes'){root.replaceChildren(h('h1',{},'Mensajes'));return;}
+async function render(){stop();const g=generation;notice();document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));if(tab==='mensajes'){await messages(g);return;}
  if(tab==='privacidad'){privacy();if(profile?.id)await privacyExtras(g);return;}
  if(!profile?.id&&tab!=='buscar'&&tab!=='mascota'){privacy();return;}
  if(tab==='eventos'){await events(g);return;}
