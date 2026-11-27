@@ -7,7 +7,7 @@ nav.mimo-nav{position:fixed;inset:auto 0 0;z-index:1200;display:block;overflow:v
 .mimo-nav a.activa,.mimo-nav button[aria-expanded=true],.mimo-nav button[data-current=true]{background:#e5efe9;color:#174a34}
 .mimo-nav .mimo-brand{font-weight:900;font-size:1.55rem;color:#27674e;letter-spacing:-.06em;padding:0 .35rem}
 .mimo-nav .mimo-actions{display:flex;align-items:center;gap:.1rem}
-.mimo-nav .mimo-actions a,.mimo-nav .mimo-actions button{flex-direction:column;font-size:.68rem;min-width:3.1rem;padding:.25rem}
+.mimo-nav .mimo-actions>a,.mimo-nav .mimo-perfil-anchor>button{flex-direction:column;font-size:.68rem;min-width:3.1rem;padding:.25rem}
 .mimo-nav svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .mimo-nav .mimo-bottom{max-width:720px;margin:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.3rem;padding:.45rem .65rem calc(.45rem + env(safe-area-inset-bottom))}
 .mimo-nav .mimo-bottom button{display:flex;flex-direction:column;gap:.3rem;padding:.5rem .2rem;min-height:3.75rem}
@@ -18,7 +18,7 @@ nav.mimo-nav{position:fixed;inset:auto 0 0;z-index:1200;display:block;overflow:v
 .mimo-nav .mimo-close{position:absolute;right:.65rem;top:.5rem;width:auto!important;border:0!important;padding:.5rem!important}
 .mimo-nav :focus-visible{outline:2px solid #27674e;outline-offset:2px}
 body.mimo-menu-activo>header.mimo-legacy-header{display:none}
-@media(max-width:390px){.mimo-nav .mimo-actions a,.mimo-nav .mimo-actions button{min-width:2.8rem}.mimo-nav .mimo-brand{font-size:1.35rem}.mimo-nav .mimo-top{padding:.4rem .55rem}}
+@media(max-width:390px){.mimo-nav .mimo-actions>a,.mimo-nav .mimo-perfil-anchor>button{min-width:2.8rem}.mimo-nav .mimo-brand{font-size:1.35rem}.mimo-nav .mimo-top{padding:.4rem .55rem}}
 
 /* v14.1: marca inferior izquierda y urgencias siempre visibles. */
 .mimo-nav .mimo-bottom{grid-template-columns:minmax(0,.95fr) repeat(3,minmax(0,1fr));gap:.15rem;padding-inline:.4rem}
@@ -28,5 +28,11 @@ body.mimo-menu-activo>header.mimo-legacy-header{display:none}
 .mimo-nav .mimo-top .mimo-urgencias:hover,.mimo-nav .mimo-top .mimo-urgencias.activa,.mimo-nav .mimo-top .mimo-urgencias[aria-current=page]{background:#811a26;color:#fff}
 .mimo-nav .mimo-urgencias svg{width:25px;height:25px;stroke-width:2}
 .mimo-nav .mimo-actions{margin-left:auto}
-.mimo-nav .mimo-actions a,.mimo-nav .mimo-actions button{min-height:44px}
-@media(max-width:390px){.mimo-nav .mimo-top{gap:.2rem;padding:.35rem .45rem}.mimo-nav .mimo-top .mimo-urgencias{font-size:.7rem;padding:.35rem .42rem;gap:.25rem}.mimo-nav .mimo-urgencias svg{width:22px;height:22px}.mimo-nav .mimo-actions{gap:0}.mimo-nav .mimo-actions a,.mimo-nav .mimo-actions button{min-width:2.65rem}}
+.mimo-nav .mimo-actions>a,.mimo-nav .mimo-perfil-anchor>button{min-height:44px}
+@media(max-width:390px){.mimo-nav .mimo-top{gap:.2rem;padding:.35rem .45rem}.mimo-nav .mimo-top .mimo-urgencias{font-size:.7rem;padding:.35rem .42rem;gap:.25rem}.mimo-nav .mimo-urgencias svg{width:22px;height:22px}.mimo-nav .mimo-actions{gap:0}.mimo-nav .mimo-actions>a,.mimo-nav .mimo-perfil-anchor>button{min-width:2.65rem}}
+
+/* v14.2 — el menú de cuenta se ancla al botón superior, no a la barra inferior. */
+.mimo-nav .mimo-perfil-anchor{position:relative;flex:none;display:flex;align-items:center}
+.mimo-nav .mimo-perfil-anchor>button{flex-direction:column;font-size:.68rem;min-width:3.1rem;padding:.25rem;min-height:44px}
+.mimo-nav .mimo-perfil-anchor>.mimo-panel{position:absolute;top:calc(100% + .55rem);right:0;bottom:auto;left:auto;transform:none;width:min(300px,calc(100vw - 1rem));max-height:calc(100dvh - 10rem);box-sizing:border-box;border-radius:1rem;box-shadow:0 8px 32px #132b2626;padding:1rem}
+@media(max-width:390px){.mimo-nav .mimo-perfil-anchor>button{min-width:2.65rem}}
