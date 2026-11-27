@@ -1,8 +1,8 @@
-import { almacen } from './almacenamiento.js?v=11';
+import { almacen } from './almacenamiento.js?v=15';
 // Mimo: avisos, rescates y perfil personal. Prototipo local sin permisos reales.
-import { h } from './seguridad.js?v=11';
-import { cargarMascotas, nuevoId, fechaLocal } from './mascotas.js?v=11';
-import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js?v=11';
+import { h } from './seguridad.js?v=15';
+import { cargarMascotas, nuevoId, fechaLocal } from './mascotas.js?v=15';
+import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js?v=15';
 const opcionesAyuda = ['Adopción','Hogar provisorio','Apadrinamiento','Insumos','Traslado'];
 const key = 'mimo_ayuda_v1';
 const card = (...c) => h('article',{class:'tarjeta'},...c);

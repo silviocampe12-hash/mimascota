@@ -1,6 +1,7 @@
 import { sb, exigirCliente, resultado, REDIRECT_URL } from './supabase.js?v=11';
-import { fijarCuenta } from './almacenamiento.js?v=11';
-import { h } from './seguridad.js?v=11';
+import { fijarCuenta } from './almacenamiento.js?v=15';
+import { h } from './seguridad.js?v=15';
+import { prepararNube } from './nube.js?v=15';
 let usuario=null,rol=null,recovery=false,revision=0;
 export const cuentaActual=()=>usuario;
 export const rolActual=()=>rol;
@@ -30,10 +31,10 @@ export function pantallaAcceso(modo='login',mensaje=''){
    if(modo==='cambiar'){await resultado(a.updateUser({password}));sessionStorage.removeItem('mimo-recovery-v11');await salir();}
   }catch(err){aviso.textContent='No se pudo completar: '+err.message;}finally{b.disabled=false;}
  }},modo==='cambiar'?null:campo('email','Correo electrónico','email'),modo==='recuperar'?null:campo('password',modo==='cambiar'?'Nueva contraseña':'Contraseña','password',modo!=='login'),h('button',{type:'submit',class:'btn'},titulo));
- raiz.replaceChildren(h('section',{class:'persona-pagina'},h('header',{class:'persona-cabecera'},h('h1',{},'Mimo'),nota('Acceso de prueba con Supabase')),h('article',{class:'persona-card'},h('h2',{},titulo),form,aviso,modo==='login'?h('div',{class:'fila'},btn('Crear cuenta',()=>pantallaAcceso('registro')),btn('Olvidé mi contraseña',()=>pantallaAcceso('recuperar'))):btn(modo==='cambiar'?'Cancelar y salir':'Volver',()=>modo==='cambiar'?salir():pantallaAcceso()),nota('Solo datos ficticios durante esta etapa.'))));
+ raiz.replaceChildren(h('section',{class:'persona-pagina'},h('header',{class:'persona-cabecera'},h('h1',{},'Mimo'),nota('Acceso con Supabase')),h('article',{class:'persona-card'},h('h2',{},titulo),form,aviso,modo==='login'?h('div',{class:'fila'},btn('Crear cuenta',()=>pantallaAcceso('registro')),btn('Olvidé mi contraseña',()=>pantallaAcceso('recuperar'))):btn(modo==='cambiar'?'Cancelar y salir':'Volver',()=>modo==='cambiar'?salir():pantallaAcceso()),nota('Versión de pruebas. No ingreses documentación real sensible hasta validar la seguridad y la recuperación.'))));
 }
 let cargando=false,arrancado=false;
-async function entrar(){if(cargando||arrancado||recovery)return;cargando=true;try{await verificar();iniciarCuenta();document.querySelector('.dock').hidden=false;await import('./aplicacion.js?v=11');arrancado=true;}catch(e){pantallaAcceso('login','No se pudo verificar el acceso: '+e.message);}finally{cargando=false;}}
+async function entrar(){if(cargando||arrancado||recovery)return;cargando=true;try{await verificar();iniciarCuenta();await prepararNube();document.querySelector('.dock').hidden=false;await import('./aplicacion.js?v=15');arrancado=true;}catch(e){pantallaAcceso('login','No se pudo verificar el acceso: '+e.message);}finally{cargando=false;}}
 export async function iniciar(){
  if(!sb){pantallaAcceso('login','No se pudo cargar Supabase. Recargá la página.');return;}
  const url=new URL(location.href),marca=url.searchParams.has('recuperar'),hash=new URLSearchParams(location.hash.slice(1));

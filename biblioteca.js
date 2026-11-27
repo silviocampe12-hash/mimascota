@@ -1,6 +1,6 @@
-import { almacen } from './almacenamiento.js?v=11';
+import { almacen } from './almacenamiento.js?v=15';
 // Biblioteca de Mimo: fichas editoriales con referencias, sin aportes públicos automáticos.
-import { h } from './seguridad.js?v=11';
+import { h } from './seguridad.js?v=15';
 const KEY='mimo_biblioteca_favoritos';
 const revision='Pendiente de revisión profesional en Mimo';
 // Cada artículo conserva su especie, categoría, texto y fuente externa.

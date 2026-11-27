@@ -1,5 +1,5 @@
 import { sb, resultado, REDIRECT_URL } from './supabase.js?v=11';
-import { h } from './seguridad.js?v=11';
+import { h } from './seguridad.js?v=15';
 const root=document.getElementById('contenido'),aviso=document.getElementById('aviso'),salir=document.getElementById('salir');
 const fragmento=new URLSearchParams(location.hash.slice(1));
 let token=fragmento.get('invitacion')||'', usuario=null, admin=false;

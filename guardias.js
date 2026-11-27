@@ -1,7 +1,7 @@
-import { almacen } from './almacenamiento.js?v=11';
+import { almacen } from './almacenamiento.js?v=15';
 // Mimo: guardias veterinarias. Prototipo local, sin verificación profesional.
-import { h } from './seguridad.js?v=11';
-import { nuevoId } from './mascotas.js?v=11';
+import { h } from './seguridad.js?v=15';
+import { nuevoId } from './mascotas.js?v=15';
 const KEY = 'mimo_guardias_v1';
 const ZONA = 'America/Argentina/Buenos_Aires';
 const formato = new Intl.DateTimeFormat('es-AR',{timeZone:ZONA,dateStyle:'short',timeStyle:'short'});

@@ -1,5 +1,5 @@
-import { h } from './seguridad.js?v=11';
-import { esAdmin, rolActual, cuentaActual, verificar, salir } from './sesion.js?v=11';
+import { h } from './seguridad.js?v=15';
+import { esAdmin, rolActual, cuentaActual, verificar, salir } from './sesion.js?v=15';
 export function accesoRuta(ruta,tieneMascota,admin=esAdmin()){
  if(ruta==='admin')return admin;
  return admin||tieneMascota||['mascota','persona','urgencias'].includes(ruta);

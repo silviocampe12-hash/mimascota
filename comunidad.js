@@ -1,10 +1,10 @@
-import { almacen } from './almacenamiento.js?v=11';
+import { almacen } from './almacenamiento.js?v=15';
 // Feed local: los archivos nuevos viven en IndexedDB y las publicaciones en localStorage.
-import { h } from './seguridad.js?v=11';
+import { h } from './seguridad.js?v=15';
 import { POSTS } from './datos.js';
-import { avatar, huella, nuevoId } from './mascotas.js?v=11';
-import { perfilVisible } from './usuario.js?v=11';
-import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js?v=11';
+import { avatar, huella, nuevoId } from './mascotas.js?v=15';
+import { perfilVisible } from './usuario.js?v=15';
+import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js?v=15';
 const KEY='mimo_comunidad_v1';
 const filtros=['Todo','Siguiendo','Reels','Guardados','Mis publicaciones'];
 const lista=x=>Array.isArray(x)?x:[];

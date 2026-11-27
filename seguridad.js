@@ -1,4 +1,4 @@
-import { almacen } from './almacenamiento.js?v=11';
+import { almacen } from './almacenamiento.js?v=15';
 // Utilidades de seguridad: sanitizado, validación, persistencia y DOM seguro
 
 export const limpiar = (v, max = 80) => String(v ?? '').replace(/[<>"'`]/g, '').trim().slice(0, max)

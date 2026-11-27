@@ -1,8 +1,9 @@
-import { almacen } from './almacenamiento.js?v=11';
+import { almacen } from './almacenamiento.js?v=15';
 // Perfil personal local. Los expedientes de entrevista nunca forman parte del perfil visible.
-import { h } from './seguridad.js?v=11';
-import { nuevoId } from './mascotas.js?v=11';
-import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js?v=11';
+import { h } from './seguridad.js?v=15';
+import { nuevoId } from './mascotas.js?v=15';
+import { validarArchivo, guardarArchivoNube as guardarArchivo, leerArchivoNube as leerArchivo, borrarArchivoNube as borrarArchivo } from './multimedia.js?v=15';
+import { guardarNube } from './nube.js?v=15';
 import { PAISES, ubicacionPublica, coordenadasValidas, validarUbicacion, capturarUbicacion } from './ubicacion.js?v=9';
 const KEY='mimo_persona_v1';
 export const DUENO='Dueño de mascotas';
@@ -90,7 +91,7 @@ export function crearPersona(render){
   const requisitoGPS=h('p',{class:'suave'});
   const gpsEstado=()=>{estadoGPS.textContent=gps?`Ubicación registrada · precisión estimada: ${Math.round(gps.precision)} m. Solo se guarda al guardar el perfil.`:'Sin ubicación precisa registrada.';};
   const activarGPS=h('button',{type:'button',class:'btn',onclick:async()=>{
-   if(!confirm('¿Estás en tu vivienda o en la ubicación que querés registrar? Las coordenadas quedarán privadas en este navegador.'))return;
+   if(!confirm('¿Estás en tu vivienda o en la ubicación que querés registrar? Las coordenadas quedarán privadas en tu cuenta de Supabase.'))return;
    const id=++solicitud;activarGPS.disabled=true;estadoGPS.textContent='Solicitando ubicación…';
    try{const nueva=await capturarUbicacion();if(id===solicitud&&estadoGPS.isConnected){gps=nueva;gpsEstado();}}
    catch(e){if(id===solicitud&&estadoGPS.isConnected)estadoGPS.textContent=e.message+(gps?' Se conserva la ubicación anterior.':'');}
@@ -98,13 +99,13 @@ export function crearPersona(render){
   }},'📍 Activar / actualizar ubicación');
   const quitarGPS=boton('Quitar ubicación precisa',()=>{solicitud++;gps=null;activarGPS.disabled=false;gpsEstado();});
   gpsEstado();
-  const ubicacionCard=card(h('h2',{},'Ubicación'),nota('País, provincia o región y ciudad organizan Mimo por zonas. Elegilos según tu residencia. La ubicación precisa nunca aparece en el perfil visible.'),h('div',{class:'persona-campos'},h('label',{class:'mimo-campo'},'País',h('select',{name:'pais',required:true,autocomplete:'country'},h('option',{value:'',selected:!anteriorUb.pais},'Elegí tu país'),PAISES.map(o=>h('option',{value:o.codigo,selected:o.codigo===anteriorUb.pais},o.nombre)))),campo('provincia','Provincia / estado / región',anteriorUb.provincia||'',{required:true,maxlength:100,autocomplete:'address-level1'}),campo('ciudad','Ciudad / localidad',anteriorUb.ciudad||'',{required:true,maxlength:100,autocomplete:'address-level2'})),p.vivienda?.localidad?nota('Localidad registrada anteriormente: '+p.vivienda.localidad+'. Completá los nuevos campos por separado.'):null,requisitoGPS,h('div',{class:'persona-gps-acciones'},activarGPS,quitarGPS),estadoGPS,nota('El navegador obtiene la posición actual. La precisión puede variar; no verifica el domicilio ni completa automáticamente la ciudad. No se envía la posición a servicios externos.'));
+  const ubicacionCard=card(h('h2',{},'Ubicación'),nota('País, provincia o región y ciudad organizan Mimo por zonas. Elegilos según tu residencia. La ubicación precisa nunca aparece en el perfil visible.'),h('div',{class:'persona-campos'},h('label',{class:'mimo-campo'},'País',h('select',{name:'pais',required:true,autocomplete:'country'},h('option',{value:'',selected:!anteriorUb.pais},'Elegí tu país'),PAISES.map(o=>h('option',{value:o.codigo,selected:o.codigo===anteriorUb.pais},o.nombre)))),campo('provincia','Provincia / estado / región',anteriorUb.provincia||'',{required:true,maxlength:100,autocomplete:'address-level1'}),campo('ciudad','Ciudad / localidad',anteriorUb.ciudad||'',{required:true,maxlength:100,autocomplete:'address-level2'})),p.vivienda?.localidad?nota('Localidad registrada anteriormente: '+p.vivienda.localidad+'. Completá los nuevos campos por separado.'):null,requisitoGPS,h('div',{class:'persona-gps-acciones'},activarGPS,quitarGPS),estadoGPS,nota('El navegador obtiene la posición actual. La precisión puede variar; no verifica el domicilio ni completa automáticamente la ciudad. La ubicación precisa solo se guarda en tu cuenta privada.'));
 
   for(const el of ubicacionCard.querySelectorAll('input,select'))el.addEventListener('change',()=>{if(gps){solicitud++;gps=null;activarGPS.disabled=false;gpsEstado();estadoGPS.textContent='Cambió la ciudad, provincia o país. Volvé a capturar la ubicación si corresponde.';}});
   function refrescar(){
    for(const el of panel.querySelectorAll('input,textarea,select'))borrador[el.name]=el.value;
    panel.replaceChildren();panel.hidden=!requiereVivienda(elegidos);
-   if(!panel.hidden)panel.append(h('h2',{},'Ficha privada para entrevista'),nota('Solo se guarda en este navegador. A futuro se compartirá únicamente con rescatistas autorizados, con tu permiso. No ingreses direcciones exactas ni datos de terceros.'),h('div',{class:'persona-campos'},...camposPara(elegidos).map(([k,t,opts])=>entrada(k,t,opts,borrador[k]))));
+   if(!panel.hidden)panel.append(h('h2',{},'Ficha privada para entrevista'),nota('Se guarda de forma privada en tu cuenta. No se comparte con rescatistas. No ingreses direcciones exactas ni datos de terceros.'),h('div',{class:'persona-campos'},...camposPara(elegidos).map(([k,t,opts])=>entrada(k,t,opts,borrador[k]))));
    aviso.textContent=elegidos.length?'La foto es obligatoria para activar estas opciones de colaboración.':'La foto es opcional para el perfil básico.';
    requisitoGPS.textContent=requiereVivienda(elegidos)?'Ubicación precisa obligatoria para adoptantes y provis.':'Ubicación precisa opcional para el resto de los roles.';
   }
@@ -112,20 +113,20 @@ export function crearPersona(render){
   archivo.addEventListener('change',()=>{if(archivo.files?.length){fotoTocada=true;quitar=false;vistaFoto();}});
   const roles=h('div',{class:'persona-roles'},...ROLES.map((r,i)=>h('div',{class:'persona-rol'},check(r,elegidos.includes(r),v=>{elegidos=v?[...elegidos,r]:elegidos.filter(x=>x!==r);refrescar();}),nota(['Quiero adoptar y completar mi ficha.','Puedo recibir temporalmente a un animal.','Estoy disponible para apoyar un caso.','Puedo colaborar con mi tiempo.'][i]))));
   const form=h('form',{class:'persona-form',onsubmit:async e=>{
-   e.preventDefault();const f=e.currentTarget,b=f.querySelector('button[type=submit]');b.disabled=true;let nuevo=null,persistido=false;
+   e.preventDefault();const f=e.currentTarget,b=f.querySelector('button[type=submit]');b.disabled=true;let nuevo=null;
    try{const d=new FormData(f),file=archivo.files?.[0];let fotoId=quitar?null:p.fotoId;
     if(file){const blob=await prepararFoto(file);nuevo=nuevoId();await guardarArchivo(nuevo,blob);fotoId=nuevo;}
     else if(elegidos.length&&fotoId&&!(await leerArchivo(fotoId)))throw Error('La foto guardada no está disponible. Seleccioná otra.');
     const vivienda=Object.fromEntries(camposPara(elegidos).map(([k])=>[k,d.get(k)]));
     const ubicacion={pais:d.get('pais'),provincia:d.get('provincia'),ciudad:d.get('ciudad'),gps};
     const next=validarPersona({nombre:d.get('nombre'),apellido:d.get('apellido'),edad:d.get('edad'),fotoId,roles:elegidos,vivienda,ubicacion},mascotasReales().length>0);
-    almacen.setItem(KEY,JSON.stringify(next));persistido=true;
+    await guardarNube(KEY,next);
     if(p.fotoId&&p.fotoId!==fotoId)await borrarArchivo(p.fotoId).catch(console.error);
-    render();
-   }catch(err){if(nuevo&&!persistido)await borrarArchivo(nuevo).catch(console.error);alert(err.message);}finally{b.disabled=false;}
+    render();alert('Perfil guardado en Supabase.');
+   }catch(err){/* No borrar archivos ante una respuesta ambigua del servidor. */alert(err.message);}finally{b.disabled=false;}
   }},card(h('h2',{},'Datos personales'),h('div',{class:'persona-foto-control'},h('strong',{},'Foto de perfil'),boton('Quitar foto',()=>{fotoTocada=true;quitar=true;archivo.value='';vistaFoto();}),aviso),h('div',{class:'persona-campos'},campo('nombre','Nombre',p.nombre,{required:true,maxlength:80,autocomplete:'given-name'}),campo('apellido','Apellido',p.apellido,{required:true,maxlength:80,autocomplete:'family-name'}),campo('edad','Edad',p.edad,{type:'number',min:1,max:120,step:1,required:true}))),ubicacionCard,card(h('h2',{},'Cómo participo'),h('div',{class:'persona-rol persona-base'},h('strong',{},'✓ '+DUENO),nota('Rol base obligatorio. No se puede quitar.')),roles),panel,card(h('h2',{},'Mis mascotas'),mascotas.length?h('div',{class:'persona-animales'},...mascotas.map(m=>h('span',{},m.nombre+' · '+m.especie))):nota('Todavía no hay mascotas reales registradas. Los perfiles de ejemplo no cuentan.'),h('a',{href:'#mascota',class:'chip'},'Gestionar mis mascotas')),h('button',{type:'submit',class:'btn',disabled:!mascotas.length},'Guardar perfil'));
   refrescar();
-  return h('section',{class:'persona-pagina'},h('header',{class:'persona-cabecera'},h('h1',{},'Mi perfil'),nota('Tu identidad en Mimo. Prototipo local, sin cuentas ni verificación real.')),card(h('div',{class:'persona-identidad'},avatarEditor,h('div',{},h('h2',{},visible.nombre),visible.activo?h('p',{},`${visible.edad} años`):nota('Perfil pendiente de completar'),visible.ubicacion?h('p',{class:'suave'},`${visible.ubicacion.ciudad} · ${visible.ubicacion.provincia} · ${visible.ubicacion.nombrePais}`):null,visible.activo?h('div',{class:'persona-animales'},...visible.roles.map(r=>h('span',{},r))):null)),nota('Vista visible: nombre, apellido, edad, foto, ciudad, provincia, país y opciones de colaboración guardadas. Las coordenadas y la ficha de vivienda son privadas.')),!mascotas.length?card(nota('Para activar tu perfil, registrá al menos una mascota propia.'),h('a',{class:'btn',href:'#mascota'},'Registrar mascota')):null,form);
+  return h('section',{class:'persona-pagina'},h('header',{class:'persona-cabecera'},h('h1',{},'Mi perfil'),nota('Tu identidad en Mimo. Los datos se guardan de forma privada en tu cuenta.')),card(h('div',{class:'persona-identidad'},avatarEditor,h('div',{},h('h2',{},visible.nombre),visible.activo?h('p',{},`${visible.edad} años`):nota('Perfil pendiente de completar'),visible.ubicacion?h('p',{class:'suave'},`${visible.ubicacion.ciudad} · ${visible.ubicacion.provincia} · ${visible.ubicacion.nombrePais}`):null,visible.activo?h('div',{class:'persona-animales'},...visible.roles.map(r=>h('span',{},r))):null)),nota('Vista previa local de tu perfil; la búsqueda social solo muestra el nombre social y las mascotas que elijas publicar. Las coordenadas y la ficha de vivienda son privadas.')),!mascotas.length?card(nota('Para activar tu perfil, registrá al menos una mascota propia.'),h('a',{class:'btn',href:'#mascota'},'Registrar mascota')):null,form);
  }
  return {vista,limpiar};
 }

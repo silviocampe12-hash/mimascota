@@ -1,4 +1,5 @@
-import { baseArchivos } from './almacenamiento.js?v=11';
+import { baseArchivos, cuentaAlmacen, nubeActiva } from './almacenamiento.js?v=15';
+import { sb, resultado } from './supabase.js?v=11';
 // IndexedDB guarda los archivos como Blob; localStorage conserva solo sus referencias.
 let conexion;
 function abrir() {
@@ -26,5 +27,23 @@ export function validarArchivo(file,clinico=false) {
   if (file.size > (clinico ? 15 : 50)*1024*1024) throw new Error('Archivo demasiado grande.');
 }
 export const guardarArchivo = (id,file) => operar('readwrite',s => s.put({id,blob:file}));
-export const leerArchivo = async id => (await operar('readonly',s => s.get(id)))?.blob;
+export const leerArchivoLocal = async id => (await operar('readonly',s => s.get(id)))?.blob;
 export const borrarArchivo = id => operar('readwrite',s => s.delete(id));
+
+const bucket=()=>sb.storage.from('mimo-privado-v15');
+const ruta=id=>{if(!/^[A-Za-z0-9_-]{1,100}$/.test(String(id)))throw Error('Identificador de archivo inválido.');return cuentaAlmacen()+'/'+id;};
+export async function guardarArchivoNube(id,file,migracion=false){
+ if(!nubeActiva())throw Error('Almacenamiento privado no iniciado.');
+ validarArchivo(file,file.type==='application/pdf');
+ const path=ruta(id);
+ if(migracion){try{if(await leerArchivoNube(id))return;}catch{}}
+ await resultado(bucket().upload(path,file,{contentType:file.type,upsert:false}));
+}
+export async function leerArchivoNube(id){return await resultado(bucket().download(ruta(id)));}
+// Las referencias ya confirmadas se descargan únicamente de la cuenta autenticada.
+// Los archivos previos se dejan en el navegador; los módulos locales todavía pueden consultarlos.
+export async function leerArchivo(id){
+ const local=await leerArchivoLocal(id).catch(()=>undefined);if(local)return local;
+ if(nubeActiva())return leerArchivoNube(id).catch(()=>undefined);
+}
+export async function borrarArchivoNube(id){await resultado(bucket().remove([ruta(id)]));}

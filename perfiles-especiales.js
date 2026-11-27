@@ -1,8 +1,8 @@
 // Directorios especiales: fichas de terceros; la gestión de responsables se realiza en Perfiles institucionales.
-import { h } from './seguridad.js?v=11';
-import { nuevoId } from './mascotas.js?v=11';
+import { h } from './seguridad.js?v=15';
+import { nuevoId } from './mascotas.js?v=15';
 import { PAISES, ubicacionPublica } from './ubicacion.js?v=9';
-import { esAdmin, verificar } from './sesion.js?v=11';
+import { esAdmin, verificar } from './sesion.js?v=15';
 import { sb, resultado } from './supabase.js?v=11';
 const TIPOS=['rescatista','veterinario'];
 const ORGANIZACIONES=['Rescatista independiente','Grupo de rescate','Refugio','Protectora'];

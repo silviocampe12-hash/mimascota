@@ -1,16 +1,16 @@
 // Mimo · router, estado y vistas
-import { h, limpiar, numero, leer, guardar } from './seguridad.js?v=11'
+import { h, limpiar, numero, leer, guardar } from './seguridad.js?v=15'
 import { VETS, PRODUCTOS } from './datos.js'
-import { crearVistaMascotas, limpiarMedios } from './perfiles.js?v=11'
-import { crearVistaGuardias } from './guardias.js?v=11'
-import { crearAyuda } from './ayuda.js?v=11'
-import { crearBiblioteca } from './biblioteca.js?v=11'
-import { crearComunidad } from './comunidad.js?v=11'
+import { crearVistaMascotas, limpiarMedios } from './perfiles.js?v=15'
+import { crearVistaGuardias } from './guardias.js?v=15'
+import { crearAyuda } from './ayuda.js?v=15'
+import { crearBiblioteca } from './biblioteca.js?v=15'
+import { crearComunidad } from './comunidad.js?v=15'
 
-import { crearPersona, mascotasReales } from './usuario.js?v=11'
-import { accesoRuta, crearAdmin } from './admin.js?v=11'
-import { esAdmin, verificar, salir } from './sesion.js?v=11'
-import { crearEspeciales } from './perfiles-especiales.js?v=11'
+import { crearPersona, mascotasReales } from './usuario.js?v=15'
+import { accesoRuta, crearAdmin } from './admin.js?v=15'
+import { esAdmin, verificar, salir } from './sesion.js?v=15'
+import { crearEspeciales } from './perfiles-especiales.js?v=15'
 
 /* ───────── Estado ───────── */
 const estado = {
