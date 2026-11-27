@@ -1,0 +1,39 @@
+
+.turnero-piloto{display:grid;gap:1rem;background:#f7faf8;border:1px solid #dce9e1;border-radius:1.2rem;padding:clamp(.85rem,3vw,1.4rem);color:#263b32;min-width:0}
+.turnero-piloto h3,.turnero-piloto h4,.turnero-piloto p{margin:0}
+.turnero-piloto [hidden]{display:none!important}
+.turnero-encabezado,.turnero-nav{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.turnero-etiqueta{font-size:.72rem;letter-spacing:.05em;color:#53685e;font-weight:700}
+.turnero-tabs{display:flex;gap:.4rem;padding:.3rem;background:#e5eee8;border-radius:.85rem}
+.turnero-tab{flex:1;border:0;border-radius:.65rem;padding:.7rem .45rem;background:transparent;color:#425c4e;font:inherit;font-weight:600;cursor:pointer}
+.turnero-tab[aria-pressed=true]{background:white;color:#245b40;box-shadow:0 1px 4px #1d442019}
+.turnero-config{display:grid;gap:.5rem}
+.turnero-config button{justify-self:start}
+.turnero-calendario{display:grid;gap:.7rem;background:#fff;border:1px solid #dce9e1;border-radius:1rem;padding:.85rem}
+.turnero-nav strong,.turnero-fecha{text-transform:capitalize}
+.turnero-nav button{min-width:2.5rem}
+.turnero-dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.25rem}
+.turnero-semana{text-align:center;color:#64776c;font-size:.8rem}
+.turnero-dia{border:1px solid transparent;background:#f1f5f2;color:#263b32;border-radius:.55rem;aspect-ratio:1.2;min-height:2rem;font:inherit;cursor:pointer}
+.turnero-dia.hoy{border-color:#6f9d83}
+.turnero-dia.elegido,.turnero-hora.elegido{background:#286348;color:#fff;border-color:#286348}
+.turnero-piloto button:disabled{opacity:.55;cursor:not-allowed}
+.turnero-fecha{font-size:.9rem;font-weight:600;color:#405c4c}
+.turnero-huecos,.turnero-form,.turnero-lista,.turnero-alertas{display:grid;gap:.6rem;min-width:0}
+.turnero-horas{display:grid;grid-template-columns:repeat(auto-fit,minmax(6rem,1fr));gap:.45rem}
+.turnero-hora{display:grid;place-items:center;padding:.65rem .3rem;border:1px solid #cfe4d6;border-radius:.7rem;background:#fff;color:#245b40;cursor:pointer;font:inherit}
+.turnero-hora span{display:grid;gap:.2rem;text-align:center}
+.turnero-hora small{font-size:.72rem}
+.turnero-hora:disabled{background:#e8edea;color:#65756b;border-color:#e1e8e3}
+.turnero-campos{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))}
+.turnero-campos label{display:grid;gap:.3rem;font-weight:600;font-size:.9rem}
+.turnero-campos input,.turnero-campos select{width:100%;min-width:0;box-sizing:border-box;padding:.6rem;border-radius:.6rem;border:1px solid #d4e2d9;background:white;color:inherit;font:inherit}
+.turnero-resumen{font-weight:600;color:#286348}
+.turnero-form>.btn{justify-self:stretch}
+.turnero-turno,.turnero-notificacion{display:grid;gap:.5rem;padding:.7rem .8rem;background:#fff;border:1px solid #e0e9e3;border-radius:.75rem;overflow-wrap:anywhere}
+.turnero-turno{grid-template-columns:1fr auto;align-items:center}
+.turnero-acciones{display:flex;flex-wrap:wrap;gap:.35rem}
+.turnero-piloto .turnero-error{color:#a02929}
+.turnero-estado:empty,.turnero-aviso:empty,.turnero-config:empty,.turnero-alertas:empty,.turnero-lista:empty,.turnero-huecos:empty{display:none}
+.turnero-aviso{padding:.65rem;background:#e2efe5;border-radius:.6rem;color:#245b40;font-weight:600}
+@media(max-width:480px){.turnero-turno{grid-template-columns:1fr}.turnero-dias{gap:.15rem}.turnero-dia{min-height:2.15rem}.turnero-nav strong{font-size:.9rem}.turnero-horas{grid-template-columns:repeat(3,minmax(0,1fr))}}
