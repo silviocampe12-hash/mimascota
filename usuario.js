@@ -4,6 +4,7 @@ import { h } from './seguridad.js?v=15';
 import { nuevoId } from './mascotas.js?v=15';
 import { validarArchivo, guardarArchivoNube as guardarArchivo, leerArchivoNube as leerArchivo, borrarArchivoNube as borrarArchivo } from './multimedia.js?v=15';
 import { guardarNube } from './nube.js?v=15';
+import { sincronizarFotoPublica } from './social-publico.js?v=16';
 import { PAISES, ubicacionPublica, coordenadasValidas, validarUbicacion, capturarUbicacion } from './ubicacion.js?v=9';
 const KEY='mimo_persona_v1';
 export const DUENO='Dueño de mascotas';
@@ -41,7 +42,7 @@ export function leerPersona(){
  return {nombre:texto(anterior.nombre,80),apellido:'',edad:'',fotoId:null,roles:[],pendientes:rolesValidos(anterior.roles),vivienda:{},ubicacion:{},creado:false};
 }
 export function validarPersona(p,hayMascota){
- if(!hayMascota)throw Error('Registrá una mascota real antes de guardar el perfil.');
+ // El perfil personal también puede ser de adoptantes y colaboradores sin mascotas.
  if(!texto(p.nombre,80)||!texto(p.apellido,80))throw Error('Completá nombre y apellido.');
  if(String(p.edad).trim()===''||!Number.isInteger(Number(p.edad))||Number(p.edad)<1||Number(p.edad)>120)throw Error('Ingresá una edad válida.');
  const roles=rolesValidos(p.roles);
@@ -58,9 +59,9 @@ export function validarPersona(p,hayMascota){
 }
 // Única proyección para la comunidad: nunca devuelve la ficha de entrevista.
 export function perfilVisible(){
- try{const p=leerPersona(),ubicacion=ubicacionPublica(p.ubicacion),activo=p.creado===true&&mascotasReales().length>0&&!!ubicacion;
+ try{const p=leerPersona(),ubicacion=ubicacionPublica(p.ubicacion),activo=p.creado===true&&!!ubicacion;
   const roles=rolesValidos(p.roles).filter(r=>!requiereVivienda([r])||coordenadasValidas(p.ubicacion?.gps));
-  return {nombre:[p.nombre,p.apellido].filter(Boolean).join(' ')||'Mi perfil',edad:activo?p.edad:null,fotoId:activo?p.fotoId:null,roles:activo?[DUENO,...(p.fotoId?roles:[])]:[],ubicacion:activo?ubicacion:null,activo};
+  return {nombre:[p.nombre,p.apellido].filter(Boolean).join(' ')||'Mi perfil',edad:activo?p.edad:null,fotoId:activo?p.fotoId:null,roles:activo?[...(mascotasReales().length?[DUENO]:[]),...(p.fotoId?roles:[])]:[],ubicacion:activo?ubicacion:null,activo};
  }catch{return {nombre:'Mi perfil',edad:null,fotoId:null,roles:[],ubicacion:null,activo:false};}
 }
 async function prepararFoto(file){
@@ -122,11 +123,12 @@ export function crearPersona(render){
     const next=validarPersona({nombre:d.get('nombre'),apellido:d.get('apellido'),edad:d.get('edad'),fotoId,roles:elegidos,vivienda,ubicacion},mascotasReales().length>0);
     await guardarNube(KEY,next);
     if(p.fotoId&&p.fotoId!==fotoId)await borrarArchivo(p.fotoId).catch(console.error);
-    render();alert('Perfil guardado en Supabase.');
+    sincronizarFotoPublica().catch(e=>console.warn('No se pudo actualizar la miniatura pública',e));
+    render();alert('Perfil actualizado correctamente.');
    }catch(err){/* No borrar archivos ante una respuesta ambigua del servidor. */alert(err.message);}finally{b.disabled=false;}
-  }},card(h('h2',{},'Datos personales'),h('div',{class:'persona-foto-control'},h('strong',{},'Foto de perfil'),boton('Quitar foto',()=>{fotoTocada=true;quitar=true;archivo.value='';vistaFoto();}),aviso),h('div',{class:'persona-campos'},campo('nombre','Nombre',p.nombre,{required:true,maxlength:80,autocomplete:'given-name'}),campo('apellido','Apellido',p.apellido,{required:true,maxlength:80,autocomplete:'family-name'}),campo('edad','Edad',p.edad,{type:'number',min:1,max:120,step:1,required:true}))),ubicacionCard,card(h('h2',{},'Cómo participo'),h('div',{class:'persona-rol persona-base'},h('strong',{},'✓ '+DUENO),nota('Rol base obligatorio. No se puede quitar.')),roles),panel,card(h('h2',{},'Mis mascotas'),mascotas.length?h('div',{class:'persona-animales'},...mascotas.map(m=>h('span',{},m.nombre+' · '+m.especie))):nota('Todavía no hay mascotas reales registradas. Los perfiles de ejemplo no cuentan.'),h('a',{href:'#mascota',class:'chip'},'Gestionar mis mascotas')),h('button',{type:'submit',class:'btn',disabled:!mascotas.length},'Guardar perfil'));
+  }},card(h('h2',{},'Datos personales'),h('div',{class:'persona-foto-control'},h('strong',{},'Foto de perfil'),boton('Quitar foto',()=>{fotoTocada=true;quitar=true;archivo.value='';vistaFoto();}),aviso),h('div',{class:'persona-campos'},campo('nombre','Nombre',p.nombre,{required:true,maxlength:80,autocomplete:'given-name'}),campo('apellido','Apellido',p.apellido,{required:true,maxlength:80,autocomplete:'family-name'}),campo('edad','Edad',p.edad,{type:'number',min:1,max:120,step:1,required:true}))),ubicacionCard,card(h('h2',{},'Cómo participo'),h('div',{class:'persona-rol persona-base'},h('strong',{},'✓ '+DUENO),nota('Rol base obligatorio. No se puede quitar.')),roles),panel,card(h('h2',{},'Mis mascotas'),mascotas.length?h('div',{class:'persona-animales'},...mascotas.map(m=>h('span',{},m.nombre+' · '+m.especie))):nota('Todavía no hay mascotas reales registradas. Los perfiles de ejemplo no cuentan.'),h('a',{href:'#mascota',class:'chip'},'Gestionar mis mascotas')),h('button',{type:'submit',class:'btn'},'Guardar perfil'));
   refrescar();
-  return h('section',{class:'persona-pagina'},h('header',{class:'persona-cabecera'},h('h1',{},'Mi perfil'),nota('Tu identidad en Mimo. Los datos se guardan de forma privada en tu cuenta.')),card(h('div',{class:'persona-identidad'},avatarEditor,h('div',{},h('h2',{},visible.nombre),visible.activo?h('p',{},`${visible.edad} años`):nota('Perfil pendiente de completar'),visible.ubicacion?h('p',{class:'suave'},`${visible.ubicacion.ciudad} · ${visible.ubicacion.provincia} · ${visible.ubicacion.nombrePais}`):null,visible.activo?h('div',{class:'persona-animales'},...visible.roles.map(r=>h('span',{},r))):null)),nota('Vista previa local de tu perfil; la búsqueda social solo muestra el nombre social y las mascotas que elijas publicar. Las coordenadas y la ficha de vivienda son privadas.')),!mascotas.length?card(nota('Para activar tu perfil, registrá al menos una mascota propia.'),h('a',{class:'btn',href:'#mascota'},'Registrar mascota')):null,form);
+  return h('section',{class:'persona-pagina'},h('header',{class:'persona-cabecera'},h('h1',{},'Mi perfil'),nota('Tu identidad en Mimo. Los datos se guardan de forma privada en tu cuenta.')),card(h('div',{class:'persona-identidad'},avatarEditor,h('div',{},h('h2',{},visible.nombre),visible.activo?h('p',{},`${visible.edad} años`):nota('Perfil pendiente de completar'),visible.ubicacion?h('p',{class:'suave'},`${visible.ubicacion.ciudad} · ${visible.ubicacion.provincia} · ${visible.ubicacion.nombrePais}`):null,visible.activo?h('div',{class:'persona-animales'},...visible.roles.map(r=>h('span',{},r))):null)),nota('Vista previa local de tu perfil; la búsqueda social solo muestra el nombre social y las mascotas que elijas publicar. Las coordenadas y la ficha de vivienda son privadas.')),form);
  }
  return {vista,limpiar};
 }
