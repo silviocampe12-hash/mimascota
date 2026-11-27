@@ -1,10 +1,11 @@
 import { sb, resultado, REDIRECT_URL } from './supabase.js?v=11';
 import { h } from './seguridad.js?v=15';
+import {panelGestion,misGrupos,rpcPerfiles} from './perfiles-v17.js?v=17';
 const root=document.getElementById('contenido'),aviso=document.getElementById('aviso'),salir=document.getElementById('salir');
 const fragmento=new URLSearchParams(location.hash.slice(1));
-let token=fragmento.get('invitacion')||'', usuario=null, admin=false;
+let token=fragmento.get('invitacion')||'', tokenVoluntario=fragmento.get('voluntario')||'', usuario=null, admin=false;
 // Quitar el secreto del historial. No se guarda en localStorage ni se envía a otros servidores.
-if(token) history.replaceState(null,'',location.pathname+location.search);
+if(token||tokenVoluntario) history.replaceState(null,'',location.pathname+location.search);
 const nota=t=>h('p',{class:'suave'},t);
 const mensaje=(t,error=false)=>{aviso.textContent=t;aviso.className=error?'error':'';};
 const rpc=(accion,datos={})=>resultado(sb.rpc('mimo_v12',{accion,datos}));
@@ -17,7 +18,7 @@ const section=(title,...children)=>h('section',{},h('h2',{},title),...children);
 const generarToken=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),n=>n.toString(16).padStart(2,'0')).join('');
 async function verificar(){const {session}=await resultado(sb.auth.getSession());usuario=null;admin=false;if(!session)return;const {user}=await resultado(sb.auth.getUser());usuario=user;const p=await resultado(sb.from('permisos').select('rol').eq('usuario_id',user.id).maybeSingle());admin=['administrador','superadministrador'].includes(p?.rol);}
 function acceso(registro=false){
- root.replaceChildren(section(registro?'Crear mi cuenta':'Iniciar sesión',token?nota('Tenés una invitación. Ingresá con el correo al que fue dirigida. Si ya tenés cuenta en Mimo, usá tu contraseña habitual.'):nota('Acceso a los perfiles institucionales de Mimo.'),form(registro?'Crear cuenta':'Entrar',async d=>{
+ root.replaceChildren(section(registro?'Crear mi cuenta':'Iniciar sesión',(token||tokenVoluntario)?nota('Tenés una invitación. Ingresá con el correo al que fue dirigida. Si ya tenés cuenta en Mimo, usá tu contraseña habitual.'):nota('Acceso a los perfiles institucionales de Mimo.'),form(registro?'Crear cuenta':'Entrar',async d=>{
   if(registro){const r=await resultado(sb.auth.signUp({email:d.email.trim(),password:d.password,options:{emailRedirectTo:REDIRECT_URL}}));if(!r.session){mensaje('Revisá tu correo y confirmá la cuenta. Después volvé a abrir el enlace original de invitación. El envío general requiere un dominio verificado.');return;}}
   else await resultado(sb.auth.signInWithPassword({email:d.email.trim(),password:d.password}));
   await cargar();
@@ -39,10 +40,11 @@ async function panelAdmin(){
  const revisar=section('4. Propuestas de edición',...(d.propuestas.length?d.propuestas.map(s=>h('article',{},h('h3',{},s.nombre),h('p',{class:'dato'},'Zona: '+s.zona+'\nEspecies: '+s.especies+'\nDescripción: '+s.descripcion),h('div',{class:'fila'},...['Aprobada','Rechazada'].map(decision=>button(decision==='Aprobada'?'Aprobar cambios':'Rechazar',async()=>{if(confirm('¿Confirmar decisión?')){await rpc('revisar',{id:s.id,decision});await cargar();}},decision==='Rechazada'))))):[nota('No hay propuestas pendientes.')]));
  return [nuevo,invitar,gestionar,revisar];
 }
-async function misPerfiles(){const perfiles=await rpc('mis_perfiles');return section('Mis perfiles institucionales',nota('Podés proponer cambios de tu ficha. El equipo de Mimo debe aprobarlos. Esto no acredita identidad profesional.'),...(perfiles.length?perfiles.map(p=>h('article',{},h('h3',{},p.nombre),nota(p.estado),form('Enviar cambios a revisión',async d=>{await rpc('proponer',{perfil_id:p.id,...d});mensaje('Propuesta enviada. La ficha pública no cambió todavía.');},area('zona','Zona de actividad',p.zona,300),area('especies','Especies',p.especies,300),area('descripcion','Presentación',p.descripcion,1200)))):[nota('Todavía no administrás ninguna ficha. Solicitá una invitación al equipo de Mimo.') ]));}
+async function misPerfiles(){const perfiles=await rpc('mis_perfiles');return section('Mis perfiles institucionales',nota('Podés proponer cambios de tu ficha. El equipo de Mimo debe aprobarlos. Esto no acredita identidad profesional.'),...(perfiles.length?perfiles.map(p=>h('article',{},h('h3',{},p.nombre),nota(p.estado),form('Enviar cambios a revisión',async d=>{await rpc('proponer',{perfil_id:p.id,...d});mensaje('Propuesta enviada. La ficha pública no cambió todavía.');},area('zona','Zona de actividad',p.zona,300),area('especies','Especies',p.especies,300),area('descripcion','Presentación',p.descripcion,1200)),panelGestion(p))):[nota('Todavía no administrás ninguna ficha. Solicitá una invitación al equipo de Mimo.') ]));}
 async function cargar(){mensaje('Conectando…');try{if(!sb)throw Error('No se pudo conectar con Supabase.');await verificar();salir.hidden=!usuario;if(!usuario){acceso();mensaje('');return;}
+ if(tokenVoluntario){root.replaceChildren(section('Aceptar invitación de voluntariado',h('p',{},'Cuenta actual: '+usuario.email),nota('La invitación solo se puede aceptar desde el correo confirmado al que fue enviada. No otorga permisos de administrador.'),button('Aceptar y vincularme al grupo',async()=>{await rpcPerfiles('aceptar_voluntario',{token:tokenVoluntario});tokenVoluntario='';await cargar();mensaje('Vinculación confirmada.');}),button('Cambiar de cuenta',async()=>{await resultado(sb.auth.signOut({scope:'local'}));await cargar();},true)));mensaje('');return;}
  if(token){root.replaceChildren(section('Aceptar invitación',h('p',{},'Cuenta actual: '+usuario.email),nota('Solo podés aceptar una invitación enviada a tu correo confirmado.'),button('Aceptar y vincular perfil',async()=>{await rpc('aceptar',{token});token='';await cargar();mensaje('Perfil vinculado correctamente.');}),button('Cambiar de cuenta',async()=>{await resultado(sb.auth.signOut({scope:'local'}));await cargar();},true)));mensaje('');return;}
- const partes=admin?await panelAdmin():[];const mis=await misPerfiles();root.replaceChildren(h('h1',{},admin?'Administración de invitaciones':'Administrá tu perfil institucional'),nota(usuario.email),...partes,mis);mensaje('');
+ const partes=admin?await panelAdmin():[];const mis=await misPerfiles();const grupos=await misGrupos(cargar).catch(e=>section('Mis grupos',nota('No se pudo consultar: '+e.message)));root.replaceChildren(h('h1',{},admin?'Administración de invitaciones':'Administrá tu perfil institucional'),nota(usuario.email),...partes,mis,grupos);mensaje('');
  }catch(e){root.replaceChildren(h('p',{},'No se pudo cargar esta sección.'),button('Reintentar',cargar,true));mensaje(e.message,true);}}
 salir.addEventListener('click',async()=>{try{await resultado(sb.auth.signOut({scope:'local'}));await cargar();}catch(e){mensaje(e.message,true);}});
 cargar();

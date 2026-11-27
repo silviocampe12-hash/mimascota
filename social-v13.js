@@ -3,6 +3,7 @@ import {h} from './seguridad.js?v=15';
 import {almacen,fijarCuenta} from './almacenamiento.js?v=15';
 import {prepararNube} from './nube.js?v=15';
 import {sincronizarFotoPublica} from './social-publico.js?v=16';
+import {datosMascotaPublica,fichaMascotaAmpliada} from './perfiles-v17.js?v=17';
 const privacidadRpc=(accion,datos={})=>resultado(sb.rpc('mimo_v16',{accion,datos}));
 const root=document.getElementById('root'),status=document.getElementById('status'),logout=document.getElementById('salir');
 const rpc=(accion,datos={})=>resultado(sb.rpc('mimo_v13',{accion,datos}));
@@ -152,7 +153,7 @@ async function verFichaMascota(g){
     note('Cargando ficha pública…'));
   if(!usuario||!mascota){root.append(note('Mascota no disponible.'));return;}
   try{
-    const m=await fichaMascota(usuario,mascota);
+    const m=await datosMascotaPublica(usuario,mascota);
     if(g!==generation)return;
     if(!m){root.replaceChildren(h('h1',{},'Mascota no disponible'),
       button('Volver a la búsqueda',()=>go('buscar')));return;}
@@ -164,6 +165,8 @@ async function verFichaMascota(g){
         m.sexo?h('p',{},h('strong',{},'Sexo: '),m.sexo):null,
         m.tamano?h('p',{},h('strong',{},'Tamaño: '),m.tamano):null,
         m.color?h('p',{},h('strong',{},'Color y características: '),m.color):null,
+        fichaMascotaAmpliada(m),
+        usuario!==user.id?h('div',{},note('Acciones sobre el responsable de la mascota'),profileActions({id:usuario,nombre:m.responsable,privado:m.privado,seguido:m.seguido})):null,
         note('Ficha pública de la mascota. Los datos de salud, ubicación privada y documentos no se muestran.')
       )
     );
