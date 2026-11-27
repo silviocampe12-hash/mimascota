@@ -182,8 +182,8 @@ async function searchProfiles(g){
   root.replaceChildren(
     h('h1',{},'Buscar personas y mascotas'),
     note('Los perfiles públicos aparecen automáticamente. Los perfiles privados solo muestran su foto y nombre hasta que acepten el seguimiento.'),
-    card(form('Buscar',async d=>{searchQuery=String(d.get('q')||'').trim();await render();},qField),
-      button('Mostrar todos',async()=>{searchQuery='';await render();}),filter),
+    card(form('Buscar',async d=>{searchQuery=String(d.get('q')||'').trim().slice(0,80);const u=new URL(location.href);if(searchQuery)u.searchParams.set('q',searchQuery);else u.searchParams.delete('q');history.replaceState(null,'',u);await render();},qField),
+      button('Mostrar todos',async()=>{searchQuery='';searchFilter='todos';const u=new URL(location.href);u.searchParams.delete('q');u.searchParams.set('filtro','todos');history.replaceState(null,'',u);await render();}),filter),
     results
   );
   try{
