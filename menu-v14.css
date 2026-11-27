@@ -1,0 +1,21 @@
+/* Navegación común: tres destinos inferiores y accesos personales superiores. */
+body.mimo-menu-activo{padding-top:4.2rem;padding-bottom:calc(5.2rem + env(safe-area-inset-bottom))}
+.mimo-nav[hidden],.mimo-nav [hidden]{display:none!important}
+nav.mimo-nav{position:fixed;inset:auto 0 0;z-index:1200;display:block;overflow:visible;background:#fff;color:#233b34;padding:0;box-shadow:0 -3px 20px #132b261c;border-top:1px solid #dce5df;font:600 .9rem/1.25 system-ui,sans-serif}
+.mimo-nav .mimo-top{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:.5rem;height:4.05rem;background:#fff;border-bottom:1px solid #dce5df;padding:.5rem max(1rem,calc((100% - 1080px)/2));box-shadow:0 2px 12px #132b2609}
+.mimo-nav a,.mimo-nav button{color:#27674e;background:transparent;text-decoration:none;border:0;border-radius:.75rem;box-shadow:none;font:inherit;padding:.5rem;white-space:normal;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.3rem}
+.mimo-nav a.activa,.mimo-nav button[aria-expanded=true],.mimo-nav button[data-current=true]{background:#e5efe9;color:#174a34}
+.mimo-nav .mimo-brand{font-weight:900;font-size:1.55rem;color:#27674e;letter-spacing:-.06em;padding:0 .35rem}
+.mimo-nav .mimo-actions{display:flex;align-items:center;gap:.1rem}
+.mimo-nav .mimo-actions a,.mimo-nav .mimo-actions button{flex-direction:column;font-size:.68rem;min-width:3.1rem;padding:.25rem}
+.mimo-nav svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.mimo-nav .mimo-bottom{max-width:720px;margin:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.3rem;padding:.45rem .65rem calc(.45rem + env(safe-area-inset-bottom))}
+.mimo-nav .mimo-bottom button{display:flex;flex-direction:column;gap:.3rem;padding:.5rem .2rem;min-height:3.75rem}
+.mimo-nav .mimo-panel{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:min(100%,540px);max-height:60dvh;overflow:auto;background:#fff;border:1px solid #dce5df;border-radius:1rem 1rem 0 0;box-shadow:0 -8px 32px #132b2626;padding:1rem}
+.mimo-nav .mimo-panel h2{font:800 1.15rem/1.25 system-ui;margin:.15rem 0 .6rem;color:#233b34}
+.mimo-nav .mimo-panel a,.mimo-nav .mimo-panel button{justify-content:flex-start;border-bottom:1px solid #edf1ed;border-radius:.4rem;padding:.85rem .5rem;text-align:left;width:100%}
+.mimo-nav .mimo-panel a:hover,.mimo-nav .mimo-panel button:hover{background:#e5efe9}
+.mimo-nav .mimo-close{position:absolute;right:.65rem;top:.5rem;width:auto!important;border:0!important;padding:.5rem!important}
+.mimo-nav :focus-visible{outline:2px solid #27674e;outline-offset:2px}
+body.mimo-menu-activo>header.mimo-legacy-header{display:none}
+@media(max-width:390px){.mimo-nav .mimo-actions a,.mimo-nav .mimo-actions button{min-width:2.8rem}.mimo-nav .mimo-brand{font-size:1.35rem}.mimo-nav .mimo-top{padding:.4rem .55rem}}
