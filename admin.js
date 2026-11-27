@@ -1,5 +1,5 @@
 import { h } from './seguridad.js?v=15';
-import { esAdmin, rolActual, cuentaActual, verificar, salir } from './sesion.js?v=15';
+import { esAdmin, rolActual, cuentaActual, verificar, salir } from './sesion.js?v=22';
 export function accesoRuta(ruta,tieneMascota,admin=esAdmin()){
  if(ruta==='admin')return admin;
  // Las secciones comunes no requieren una mascota ni un permiso administrativo.

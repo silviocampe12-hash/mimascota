@@ -2,7 +2,7 @@
 import { h } from './seguridad.js?v=15';
 import { nuevoId } from './mascotas.js?v=15';
 import { PAISES, ubicacionPublica } from './ubicacion.js?v=9';
-import { esAdmin, verificar } from './sesion.js?v=15';
+import { esAdmin, verificar } from './sesion.js?v=22';
 import { sb, resultado } from './supabase.js?v=11';
 import {detallesPublicos,panelGestion} from './perfiles-v17.js?v=17';
 const TIPOS=['rescatista','veterinario'];
