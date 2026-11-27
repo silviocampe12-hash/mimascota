@@ -5,7 +5,7 @@ import { crearVistaMascotas, limpiarMedios } from './perfiles.js?v=15'
 import { crearVistaGuardias } from './guardias.js?v=15'
 import { crearAyuda } from './ayuda.js?v=15'
 import { crearBiblioteca } from './biblioteca.js?v=15'
-import { crearComunidad } from './comunidad.js?v=17'
+import { crearComunidad } from './comunidad.js?v=18'
 
 import { crearPersona, mascotasReales } from './usuario.js?v=16'
 import { accesoRuta, crearAdmin } from './admin.js?v=15'
