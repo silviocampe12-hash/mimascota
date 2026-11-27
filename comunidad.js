@@ -159,10 +159,24 @@ export function crearComunidad(render){
     const liked=estado.likes.includes(p.id),saved=estado.guardados.includes(p.id),count=estado.comentarios.filter(x=>x.post===p.id).length;
     return card(autor(p),fila(h('span',{class:'social-etiqueta'},p.formato==='Texto'?'Publicación':p.formato),p.visibilidad==='Privada'?h('span',{class:'social-etiqueta'},'Privada'):null),p.media.length?h('div',{class:p.formato==='Fotos'&&p.media.length>1?'social-fotos':'social-contenido'},p.media.map(m=>medio(m,p.formato==='Reel'))):null,p.texto?.trim()?h('p',{class:p.media.length?'social-texto social-pie':'social-texto'},p.texto):null,p.origen==='galeria'?h('a',{href:'#mascota'},'Gestionar desde Mi mascota'):null,h('div',{class:'social-interacciones'},h('button',{type:'button',class:'me-gusta','aria-pressed':String(liked),onclick:toggle('likes',p.id),'aria-label':'Dar o quitar huellita'},huella(p.avatarPet?.tipo||p.avatarPet?.especie||'perro'),String((p.baseLikes||0)+(liked?1:0))),btn(`Comentarios (${count})`,()=>{comentando=comentando===p.id?null:p.id;render();},{'aria-expanded':String(comentando===p.id)}),btn(saved?'Guardado':'Guardar',toggle('guardados',p.id),{'aria-pressed':String(saved)}),h('details',{class:'social-menu'},h('summary',{'aria-label':'Más opciones'},'···'),fila(p.propio&&!p.origen?btn('Editar',()=>{editId=p.id;render();document.querySelector('.social-editor')?.scrollIntoView({block:'center'});}):null,p.propio&&!p.origen?btn('Eliminar',quitar(p)):null,btn('Ocultar',toggle('ocultos',p.id)),btn('Denunciar',reportar(p))))),comentando===p.id?comentarios(p,ctx):null);
   }
+  // Buscador de perfiles, independiente del filtro local de publicaciones.
+  function buscarPersonas(){
+    return h('form',{class:'social-buscador-personas',role:'search',onsubmit:e=>{
+      e.preventDefault();
+      const nombre=String(new FormData(e.currentTarget).get('nombre')||'').trim();
+      if(nombre.length<2)return;
+      const destino=new URL('./social-v13.html',location.href);
+      destino.searchParams.set('vista','buscar');
+      destino.searchParams.set('q',nombre.slice(0,80));
+      location.assign(destino.href);
+    }},h('input',{type:'search',name:'nombre',required:true,minlength:2,maxlength:80,
+      placeholder:'Buscar personas o mascotas', 'aria-label':'Buscar personas o mascotas'}),
+      h('button',{class:'btn',type:'submit'},'Buscar'));
+  }
   function vista(){
     if(fallo)return card(h('h1',{},'Comunidad'),nota('No se pudieron leer tus datos: '+fallo));
     const ctx=fuentes(), propios=estado.posts.map(p=>{const m=ctx.mascotas.find(x=>x.id===p.mascotaId);return {...p,autor:ctx.nombre,roles:ctx.roles,fotoPersona:ctx.perfil.fotoId,mascota:m?.nombre,avatarPet:m};});const posts=filtrarFeed([...propios,...ctx.externos],estado,filtro,q);
-    return h('section',{class:'social-feed'},h('header',{class:'social-cabecera'},h('h1',{},'Comunidad'),nota('Compartí el día a día de tus mascotas. Prototipo local.')),editor(ctx),h('nav',{class:'social-tabs','aria-label':'Filtros de Comunidad'},filtros.map(t=>btn(t,()=>{filtro=t;comentando=null;render();},{'aria-pressed':String(t===filtro)}))),h('div',{class:'social-busqueda'},h('form',{onsubmit:e=>{e.preventDefault();q=texto(new FormData(e.currentTarget).get('q'),100);render();}},h('input',{type:'search',name:'q',value:q,placeholder:'Buscar publicaciones','aria-label':'Buscar publicaciones'}),h('button',{class:'btn',type:'submit'},'Buscar'))),estado.ocultos.length?btn('Restaurar publicaciones ocultas',intentar(()=>{cambiar('ocultos',[]);render();})):null,posts.length?posts.map(p=>publicacion(p,ctx)):card(nota('No hay publicaciones para mostrar con estos filtros.')));
+    return h('section',{class:'social-feed'},h('header',{class:'social-cabecera'},h('h1',{},'Comunidad'),nota('Compartí el día a día de tus mascotas. Prototipo local.'),buscarPersonas()),editor(ctx),h('nav',{class:'social-tabs','aria-label':'Filtros de Comunidad'},filtros.map(t=>btn(t,()=>{filtro=t;comentando=null;render();},{'aria-pressed':String(t===filtro)}))),h('div',{class:'social-busqueda'},h('form',{onsubmit:e=>{e.preventDefault();q=texto(new FormData(e.currentTarget).get('q'),100);render();}},h('input',{type:'search',name:'q',value:q,placeholder:'Buscar publicaciones','aria-label':'Buscar publicaciones'}),h('button',{class:'btn',type:'submit'},'Buscar'))),estado.ocultos.length?btn('Restaurar publicaciones ocultas',intentar(()=>{cambiar('ocultos',[]);render();})):null,posts.length?posts.map(p=>publicacion(p,ctx)):card(nota('No hay publicaciones para mostrar con estos filtros.')));
   }
   return {vista,limpiar};
 }
