@@ -3,3 +3,9 @@
 
 /* Miniatura pública de perfil: nunca se carga la foto privada original. */
 img.search-avatar{object-fit:cover;display:block;flex-shrink:0}
+
+/* Tres puntos de opciones en cada mensaje; sin texto ocupando la conversación. */
+.mensaje-opciones{position:relative;margin-left:.3rem}
+.mensaje-opciones summary{list-style:none;cursor:pointer;padding:.1rem .35rem;font-weight:800;letter-spacing:.1em}
+.mensaje-opciones summary::-webkit-details-marker{display:none}
+.mensaje-opciones[open]{z-index:2}
