@@ -2,7 +2,8 @@ import {sb,resultado} from './supabase.js?v=11';
 import {h} from './seguridad.js?v=15';
 import {almacen,fijarCuenta} from './almacenamiento.js?v=15';
 import {prepararNube} from './nube.js?v=15';
-const buscarRpc=(accion,datos={})=>resultado(sb.rpc('mimo_v14',{accion,datos}));
+import {sincronizarFotoPublica} from './social-publico.js?v=16';
+const privacidadRpc=(accion,datos={})=>resultado(sb.rpc('mimo_v16',{accion,datos}));
 const root=document.getElementById('root'),status=document.getElementById('status'),logout=document.getElementById('salir');
 const rpc=(accion,datos={})=>resultado(sb.rpc('mimo_v13',{accion,datos}));
 const tabs=['eventos','mensajes','privacidad','buscar'];let tab=new URLSearchParams(location.search).get('vista');if(!tabs.includes(tab))tab='eventos';
@@ -22,28 +23,119 @@ function stop(){generation++;clearInterval(poll);poll=null;map?.remove();map=nul
 function go(t){if(!tabs.includes(t))return;tab=t;active=null;const u=new URL(location.href);u.searchParams.set('vista',t);history.replaceState(null,'',u);window.dispatchEvent(new Event('mimo-navegacion'));render();}
 for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click',()=>go(b.dataset.tab));
 logout.addEventListener('click',async()=>{stop();await sb.auth.signOut({scope:'local'});location.replace('./');});
-async function boot(){if(!sb)throw Error('No se pudo cargar Supabase.');const {session}=await resultado(sb.auth.getSession());if(!session){root.replaceChildren(card(h('h1',{},'Ingresá a Mimo'),note('Necesitás iniciar sesión con tu cuenta.'),h('a',{href:'./',class:'action'},'Iniciar sesión')));notice();return;}const x=await resultado(sb.auth.getUser());user=x.user;if(!user)throw Error('Sesión no válida');fijarCuenta(user.id);await prepararNube({importar:false});logout.hidden=false;const r=await resultado(sb.from('permisos').select('rol').eq('usuario_id',user.id).maybeSingle());admin=['administrador','superadministrador'].includes(r?.rol);profile=await rpc('mi_perfil');sb.auth.onAuthStateChange((event,s)=>{if(event==='SIGNED_OUT'||(s?.user?.id&&s.user.id!==user.id)){stop();location.replace('./');}});await render();}
-async function render(){stop();const g=generation;notice();document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));if(!profile?.id||tab==='privacidad'){privacy();return;}if(tab==='eventos'){await events(g);return;}if(tab==='buscar'){await searchProfiles(g);return;}await messages(g);}
+async function boot(){if(!sb)throw Error('No se pudo cargar Supabase.');const {session}=await resultado(sb.auth.getSession());if(!session){root.replaceChildren(card(h('h1',{},'Ingresá a Mimo'),note('Necesitás iniciar sesión con tu cuenta.'),h('a',{href:'./',class:'action'},'Iniciar sesión')));notice();return;}const x=await resultado(sb.auth.getUser());user=x.user;if(!user)throw Error('Sesión no válida');fijarCuenta(user.id);await prepararNube({importar:false});await sincronizarFotoPublica().catch(e=>console.warn('Miniatura pública no sincronizada',e));logout.hidden=false;const r=await resultado(sb.from('permisos').select('rol').eq('usuario_id',user.id).maybeSingle());admin=['administrador','superadministrador'].includes(r?.rol);profile=await rpc('mi_perfil');sb.auth.onAuthStateChange((event,s)=>{if(event==='SIGNED_OUT'||(s?.user?.id&&s.user.id!==user.id)){stop();location.replace('./');}});await render();}
+async function render(){stop();const g=generation;notice();document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));if(tab==='privacidad'){privacy();if(profile?.id)await privacyExtras(g);return;}if(!profile?.id&&tab!=='buscar'){privacy();return;}if(tab==='eventos'){await events(g);return;}if(tab==='buscar'){await searchProfiles(g);return;}await messages(g);}
 function privacy(){const first=!profile?.id;root.replaceChildren(card(h('h1',{},first?'Activá tu perfil social':'Privacidad y perfil social'),note('El nombre que elijas aparecerá ante otros usuarios. No se publica tu correo, domicilio ni datos privados del perfil personal.'),form('Guardar configuración',async d=>{await rpc('guardar_perfil',{nombre:d.get('nombre'),modo:d.get('modo'),leidos:d.has('leidos'),presencia:d.has('presencia')});profile=await rpc('mi_perfil');notice('Configuración guardada');if(first){if(tab==='privacidad')tab='mensajes';const u=new URL(location.href);u.searchParams.set('vista',tab);history.replaceState(null,'',u);window.dispatchEvent(new Event('mimo-navegacion'));await render();}},field('nombre','Nombre visible',profile?.nombre||'',{required:true,maxlength:80}),select('modo','Quién puede enviarte mensajes',[['todos','Todos · mensajes directos'],['seguidos','Personas que sigo · otros en Solicitudes'],['nadie','Nadie']],profile?.modo||'seguidos'),check('leidos','Mostrar confirmaciones de lectura (recíprocas)',profile?.leidos??true),check('presencia','Mostrar en línea y última actividad (recíproco)',profile?.presencia??false),note('Las solicitudes no muestran confirmaciones. Una conversación aceptada permanece directa hasta que la bloquees o selecciones Nadie. El estado en línea refleja únicamente actividad en Mensajes.'))),card(h('h2',{},'Seguidores y bloqueos'),note('Las relaciones de esta sección se guardan en Supabase. Los seguidores del prototipo local de Comunidad no se importan.'),button('Buscar personas y mascotas',()=>go('buscar'))));}
 
-// Solo se publican nombre y especie de mascotas elegidas explícitamente.
+// Búsqueda pública: nombres de personas y mascotas proyectados desde su perfil real.
 let searchQuery='',searchFilter='todos';
 const normalizeName=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-const petKey=p=>JSON.stringify([p.nombre,p.especie]);
-function localPets(){try{const list=JSON.parse(almacen.getItem('mimo_mascotas')||'[]');return Array.isArray(list)?list.filter(p=>p&&!p.demo&&p.id&&p.nombre).map(p=>({nombre:String(p.nombre).trim().slice(0,40),especie:String(p.especie||p.tipo||'Mascota').trim().slice(0,60)})).filter(p=>p.nombre&&p.especie):[];}catch{return [];}}
-async function contactPerson(p){const list=await rpc('chats');const c=list.find(x=>x.persona===p.id);tab='mensajes';folder=c?.estado==='solicitud'?'solicitudes':'chats';active=c?{id:c.id}:{new:true,persona:p.id,nombre:p.nombre};const u=new URL(location.href);u.searchParams.set('vista',tab);history.replaceState(null,'',u);window.dispatchEvent(new Event('mimo-navegacion'));await render();}
-function profileActions(p){return p.id===user.id?note('Tu perfil'):row(button(p.seguido?'Dejar de seguir':'Seguir',async()=>{await rpc(p.seguido?'dejar':'seguir',{persona:p.id});await render();}),button('Mensaje',()=>contactPerson(p),'primary'));}
-function profileCard(p,pet=null){return card(row(h('span',{class:'search-avatar','aria-hidden':'true'},pet?'🐾':p.nombre.slice(0,1).toUpperCase()),h('div',{},h('span',{class:'pill'},pet?'Mascota':'Persona'),h('h2',{},pet?pet.nombre:p.nombre),pet?note(pet.especie+' · Responsable: '+p.nombre):note('Perfil social de Mimo'))),h('details',{},h('summary',{},'Ver perfil'),h('p',{},'Nombre visible: '+p.nombre),p.mascotas.length?h('div',{},h('strong',{},'Mascotas compartidas'),...p.mascotas.map(m=>h('p',{},m.nombre+' · '+m.especie))):note('No hay mascotas compartidas.')),profileActions(p));}
+const miniAvatar=p=>p.foto&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(p.foto)?
+  h('img',{class:'search-avatar',src:p.foto,alt:'Foto de perfil',loading:'lazy'}):
+  h('span',{class:'search-avatar','aria-hidden':'true'},(p.nombre||'?').slice(0,1).toUpperCase());
+
+async function privacyExtras(g){
+  const [estado,pendientes,bloqueados]=await Promise.all([
+    privacidadRpc('mi_estado'),privacidadRpc('solicitudes'),privacidadRpc('bloqueados')
+  ]);
+  if(g!==generation||tab!=='privacidad'||!estado)return;
+  root.append(card(
+    h('h2',{},'Visibilidad de mi perfil'),
+    note(estado.privado?
+      'Perfil privado: en la búsqueda aparecen tu nombre y foto. Tus mascotas y el resto de tu perfil solo se ven si aceptás el seguimiento.':
+      'Perfil público: tu nombre y las mascotas registradas aparecen en las búsquedas automáticamente, sin casillas ni autorizaciones. Tus datos personales privados y fichas de salud nunca se publican.'),
+    button(estado.privado?'Cambiar a perfil público':'Cambiar a perfil privado',async()=>{
+      await privacidadRpc('guardar_privacidad',{privado:!estado.privado});
+      await render();
+    },'primary')
+  ),card(h('h2',{},'Solicitudes para seguirme'),
+    pendientes.length?pendientes.map(p=>row(miniAvatar(p),h('strong',{},p.nombre),
+      button('Aceptar',async()=>{await privacidadRpc('aceptar',{persona:p.id});await render();},'primary'),
+      button('Rechazar',async()=>{await privacidadRpc('rechazar',{persona:p.id});await render();})
+    )):note('No tenés solicitudes pendientes.')
+  ),card(h('h2',{},'Usuarios bloqueados'),
+    bloqueados.length?bloqueados.map(p=>row(h('strong',{},p.nombre),
+      button('Desbloquear',async()=>{await privacidadRpc('desbloquear',{persona:p.id});await render();})
+    )):note('No hay usuarios bloqueados.')
+  ));
+}
+async function contactPerson(p){
+  const list=await rpc('chats');
+  const c=list.find(x=>x.persona===p.id);
+  tab='mensajes';folder=c?.estado==='solicitud'?'solicitudes':'chats';
+  active=c?{id:c.id}:{new:true,persona:p.id,nombre:p.nombre};
+  const u=new URL(location.href);u.searchParams.set('vista',tab);history.replaceState(null,'',u);
+  window.dispatchEvent(new Event('mimo-navegacion'));
+  await render();
+}
+function profileActions(p){
+  if(p.id===user.id)return note('Tu perfil');
+  if(p.privado&&!p.seguido)return row(
+    p.pendiente?note('Solicitud pendiente'):button('Solicitar seguimiento',async()=>{
+      await privacidadRpc('seguir',{persona:p.id});await render();
+    },'primary'),
+    p.pendiente?button('Cancelar solicitud',async()=>{
+      await privacidadRpc('dejar',{persona:p.id});await render();
+    }):null,
+    button('Bloquear',async()=>{if(confirm('¿Bloquear este perfil?')){
+      await privacidadRpc('bloquear',{persona:p.id});await render();
+    }},'danger')
+  );
+  return row(
+    button(p.seguido?'Dejar de seguir':'Seguir',async()=>{
+      await privacidadRpc(p.seguido?'dejar':'seguir',{persona:p.id});await render();
+    }),
+    profile?.id?button('Mensaje',()=>contactPerson(p),'primary'):null,
+    button('Bloquear',async()=>{if(confirm('¿Bloquear este perfil?')){
+      await privacidadRpc('bloquear',{persona:p.id});await render();
+    }},'danger')
+  );
+}
+function profileCard(p,pet=null){
+  const restringido=p.privado&&!p.seguido&&p.id!==user.id;
+  return card(
+    row(miniAvatar(p),h('div',{},
+      h('span',{class:'pill'},restringido?'Perfil privado':pet?'Mascota':'Persona'),
+      h('h2',{},restringido?p.nombre:pet?pet.nombre:p.nombre),
+      !restringido&&pet?note(pet.especie+' · Responsable: '+p.nombre):
+      note(restringido?'Contenido disponible cuando acepten tu seguimiento':'Perfil social de Mimos')
+    )),
+    restringido?null:h('details',{},h('summary',{},'Ver perfil'),
+      h('p',{},'Nombre visible: '+p.nombre),
+      p.mascotas.length?h('div',{},h('strong',{},'Mascotas'),
+        ...p.mascotas.map(m=>h('p',{},m.nombre+' · '+m.especie))
+      ):note('Sin mascotas registradas.')),
+    profileActions(p)
+  );
+}
 async function searchProfiles(g){
- const results=h('div',{class:'grid',id:'search-results'}),manage=h('div',{},note('Consultando tus mascotas…'));
- const qField=field('q','Nombre de persona o mascota',searchQuery,{type:'search',minlength:2,maxlength:80,required:true,placeholder:'Ej. Mora o María'});
- const filter=row(...[['todos','Todos'],['personas','Personas'],['mascotas','Mascotas']].map(([k,t])=>button(t,()=>{searchFilter=k;return render();},searchFilter===k?'primary':'')));
- root.replaceChildren(h('h1',{},'Buscar perfiles'),note('Encontrá perfiles sociales por nombre y mascotas que sus responsables eligieron compartir.'),card(form('Buscar',async d=>{searchQuery=String(d.get('q')).trim();await render();},qField),filter),results,h('details',{class:'card',id:'buscar-visibilidad',open:new URLSearchParams(location.search).has('gestion')},h('summary',{},'Administrar visibilidad de mis mascotas'),note('Publicá solo las mascotas que quieras que otros usuarios encuentren. No se comparten fotos, ubicación, salud ni información de vivienda.'),manage));
- try{const published=await buscarRpc('mis_mascotas');if(g!==generation)return;const options=[...new Map([...published,...localPets()].map(p=>[petKey(p),p])).values()];const chosen=new Set(published.map(petKey));const choices=options.map((p,i)=>h('label',{class:'check'},h('input',{type:'checkbox',name:'pet',value:String(i),checked:chosen.has(petKey(p))}),p.nombre+' · '+p.especie));manage.replaceChildren(note('Las mascotas guardadas en tu cuenta aparecen aquí. La selección guardada también se conserva si ingresás desde otro dispositivo.'),form('Guardar visibilidad',async d=>{const pets=d.getAll('pet').map(i=>options[Number(i)]).filter(Boolean);await buscarRpc('guardar_mascotas',{mascotas:pets});notice('Visibilidad actualizada.');await render();},...choices,note(options.length?'Desmarcá una mascota para retirarla del buscador. Los cambios de nombre requieren actualizar la selección.':'Todavía no hay mascotas registradas en tu cuenta.'),h('a',{href:'./#mascota',class:'action'},'Mis mascotas')));
- }catch(e){if(g===generation)manage.replaceChildren(note('No se pudo consultar la visibilidad: '+e.message));}
- if(g!==generation)return;
- if(!searchQuery){results.replaceChildren(note('Escribí al menos dos letras para comenzar.'));return;}
- try{results.replaceChildren(note('Buscando…'));const people=await buscarRpc('buscar',{q:searchQuery});if(g!==generation)return;const q=normalizeName(searchQuery),cards=[];for(const p of people){if(searchFilter!=='mascotas'&&p.coincide_persona)cards.push(profileCard(p));if(searchFilter!=='personas')for(const pet of p.mascotas)if(normalizeName(pet.nombre).includes(q))cards.push(profileCard(p,pet));}results.replaceChildren(...(cards.length?cards:[note('No encontramos perfiles con ese nombre.')]));}catch(e){if(g===generation)results.replaceChildren(note('No se pudo buscar: '+e.message));}
+  const results=h('div',{class:'grid',id:'search-results'});
+  const qField=field('q','Nombre de persona o mascota',searchQuery,{
+    type:'search',maxlength:80,placeholder:'Ej. Mora o María'
+  });
+  const filter=row(...[['todos','Todos'],['personas','Personas'],['mascotas','Mascotas']]
+    .map(([k,t])=>button(t,()=>{searchFilter=k;return render();},searchFilter===k?'primary':'')));
+  root.replaceChildren(
+    h('h1',{},'Buscar personas y mascotas'),
+    note('Los perfiles públicos aparecen automáticamente. Los perfiles privados solo muestran su foto y nombre hasta que acepten el seguimiento.'),
+    card(form('Buscar',async d=>{searchQuery=String(d.get('q')||'').trim();await render();},qField),
+      button('Mostrar todos',async()=>{searchQuery='';await render();}),filter),
+    results
+  );
+  try{
+    results.replaceChildren(note('Buscando perfiles…'));
+    const people=await privacidadRpc('buscar',{q:searchQuery});
+    if(g!==generation)return;
+    const q=normalizeName(searchQuery),cards=[];
+    for(const p of people){
+      if(searchFilter!=='mascotas'&&(p.coincide_persona||!q))cards.push(profileCard(p));
+      if(searchFilter!=='personas'&&(!p.privado||p.seguido||p.id===user.id)){
+        for(const pet of p.mascotas)
+          if(!q||normalizeName(pet.nombre).includes(q))cards.push(profileCard(p,pet));
+      }
+    }
+    results.replaceChildren(...(cards.length?cards:[note('No encontramos perfiles con ese nombre.')]));
+  }catch(e){if(g===generation)results.replaceChildren(note('No se pudo buscar: '+e.message));}
 }
 
 const cats=['Adopción','Castración','Vacunación','Encuentro','Solidario','Educación','Otro'];
@@ -58,9 +150,28 @@ file.addEventListener('change',async()=>{try{if(file.files[0]){chosen=await comp
 const setPoint=(lat,lng)=>{point={lat:Number(lat.toFixed(6)),lng:Number(lng.toFixed(6))};pos.textContent=`${point.lat}, ${point.lng}`;if(map){marker?.remove();marker=L.marker([point.lat,point.lng]).addTo(map);}};
 root.replaceChildren(card(row(h('h1',{},e.id?'Editar evento':'Crear evento'),button('Volver',()=>render())),form('Guardar evento',async d=>{if(file.files[0])chosen=await compress(file.files[0]);const start=new Date(d.get('inicio')),end=new Date(d.get('fin'));if(!(end>start))throw Error('El final debe ser posterior al inicio');await rpc('guardar_evento',{...Object.fromEntries(d),id:e.id||null,inicio:start.toISOString(),fin:end.toISOString(),lat:point?.lat??null,lng:point?.lng??null,imagen:chosen});await render();},field('titulo','Título',e.titulo||'',{required:true,maxlength:100}),select('categoria','Categoría',cats.map(x=>[x,x]),e.categoria||cats[0]),area('descripcion','Descripción',e.descripcion||'',{required:true,maxlength:2000}),h('div',{class:'grid'},field('inicio','Inicio',localInput(e.inicio),{type:'datetime-local',required:true}),field('fin','Final',localInput(e.fin),{type:'datetime-local',required:true})),note('Las fechas se interpretan en la zona horaria de este dispositivo.'),h('div',{class:'grid'},field('pais','País',e.pais||'Argentina',{required:true,maxlength:80}),field('provincia','Provincia',e.provincia||'',{required:true,maxlength:100}),field('ciudad','Localidad',e.ciudad||'',{required:true,maxlength:100})),field('lugar','Lugar / dirección pública',e.lugar||'',{required:true,maxlength:180}),note('Marcá opcionalmente el lugar en el mapa. No publiques domicilios privados ni ubicaciones sensibles.'),mapEl,pos,button('Quitar punto',()=>{point=null;marker?.remove();pos.textContent='Sin punto marcado';}),field('costo','Costo / gratuito',e.costo||'',{maxlength:100}),area('requisitos','Requisitos, inscripción, qué llevar',e.requisitos||'',{maxlength:1000}),h('label',{},'Imagen de portada',file),preview,button('Quitar imagen',()=>{chosen='';file.value='';preview.replaceChildren();}))));if(globalThis.L){map=L.map(mapEl).setView(point?[point.lat,point.lng]:[-32,-64],point?15:5);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);if(point)setPoint(point.lat,point.lng);map.on('click',x=>setPoint(x.latlng.lat,x.latlng.lng));}else mapEl.replaceChildren(note('Mapa no disponible. Podés guardar la dirección igualmente.'));}
 async function messages(g){root.replaceChildren(h('h1',{},'Mensajes'),h('div',{class:'chatlayout'+(active?' open':''),id:'layout'},h('aside',{class:'chat-sidebar card'},row(button('Chats',()=>{folder='chats';active=null;render();},folder==='chats'?'primary':''),button('Solicitudes',()=>{folder='solicitudes';active=null;render();},folder==='solicitudes'?'primary':''),button('Personas',()=>{folder='personas';active=null;render();},folder==='personas'?'primary':'')),h('div',{id:'chatlist',class:'chatlist'},'Cargando…'),folder==='personas'?form('Buscar',async d=>{personQuery=String(d.get('q'));await render();},field('q','Buscar personas',personQuery,{type:'search',maxlength:80})):null),h('section',{class:'chatpanel card',id:'chatpanel'},note('Elegí una conversación o buscá a alguien.'))));if(active?.new)showNew(active);try{await refresh(g);}catch(e){if(g===generation)notice(e.message,true);}if(g===generation)poll=setInterval(()=>{if(!document.hidden)refresh(g).catch(e=>{if(g===generation)notice(e.message,true);});},5000);}
-async function refresh(g){if(busy===g||g!==generation||document.hidden)return;busy=g;try{if(Date.now()-lastActivity>4500){await rpc('actividad');lastActivity=Date.now();}const list=await rpc('chats');if(g!==generation)return;const el=document.getElementById('chatlist');if(!el)return;const requests=list.filter(c=>c.estado==='solicitud'&&c.iniciador!==user.id).length;const btns=document.querySelectorAll('.chat-sidebar>div.row button');if(btns[1])btns[1].textContent='Solicitudes'+(requests?` (${requests})`:'');if(folder==='personas'){const people=await rpc('personas',{q:personQuery});if(g!==generation)return;el.replaceChildren(...(people.length?people.map(p=>personCard(p,list)):[note('No hay personas con ese nombre.')]));}else{const shown=list.filter(c=>folder==='solicitudes'?c.estado==='solicitud':c.estado==='aceptado');el.replaceChildren(...(shown.length?shown.map(c=>button(c.nombre+' · '+(c.estado==='solicitud'?(c.iniciador===user.id?'Enviada':'Nueva solicitud'):(c.pendientes?`${c.pendientes} nuevos`:'')),()=>openChat(c), 'chatentry'+(active?.id===c.id?' primary':''))):[note(folder==='solicitudes'?'Sin solicitudes.':'Todavía no hay conversaciones.')]));for(let i=0;i<shown.length;i++){const c=shown[i];el.children[i].append(h('small',{},c.ultimo||'Sin mensajes'));}}
+async function refresh(g){if(busy===g||g!==generation||document.hidden)return;busy=g;try{if(Date.now()-lastActivity>4500){await rpc('actividad');lastActivity=Date.now();}const list=await rpc('chats');if(g!==generation)return;const el=document.getElementById('chatlist');if(!el)return;const requests=list.filter(c=>c.estado==='solicitud'&&c.iniciador!==user.id).length;const btns=document.querySelectorAll('.chat-sidebar>div.row button');if(btns[1])btns[1].textContent='Solicitudes'+(requests?` (${requests})`:'');if(folder==='personas'){const people=await privacidadRpc('buscar',{q:personQuery});if(g!==generation)return;el.replaceChildren(...(people.length?people.map(p=>personCard(p,list)):[note('No hay personas con ese nombre.')]));}else{const shown=list.filter(c=>folder==='solicitudes'?c.estado==='solicitud':c.estado==='aceptado');el.replaceChildren(...(shown.length?shown.map(c=>button(c.nombre+' · '+(c.estado==='solicitud'?(c.iniciador===user.id?'Enviada':'Nueva solicitud'):(c.pendientes?`${c.pendientes} nuevos`:'')),()=>openChat(c), 'chatentry'+(active?.id===c.id?' primary':''))):[note(folder==='solicitudes'?'Sin solicitudes.':'Todavía no hay conversaciones.')]));for(let i=0;i<shown.length;i++){const c=shown[i];el.children[i].append(h('small',{},c.ultimo||'Sin mensajes'));}}
 if(active?.id){if(!list.some(c=>c.id===active.id)){active=null;document.getElementById('layout')?.classList.remove('open');document.getElementById('chatpanel')?.replaceChildren(note('Conversación no disponible.'));return;}const id=active.id,c=await rpc('abrir',{chat:id,visible:!document.hidden&&document.hasFocus()});if(g!==generation||active?.id!==id)return;showChat(c);}}finally{if(busy===g)busy=null;}}
-function personCard(p,list){return h('div',{class:'person'},h('strong',{},p.nombre),row(p.bloqueado?button('Desbloquear',async()=>{await rpc('desbloquear',{persona:p.id});await render();}):button(p.seguido?'Dejar de seguir':'Seguir',async()=>{await rpc(p.seguido?'dejar':'seguir',{persona:p.id});await render();}),!p.bloqueado?button('Mensaje',()=>{const c=list.find(x=>x.persona===p.id);if(c)openChat(c);else{active={new:true,persona:p.id,nombre:p.nombre};document.getElementById('layout').classList.add('open');showNew(active);}},'primary'):null,!p.bloqueado?button('Bloquear',async()=>{if(confirm('¿Bloquear a esta persona?')){await rpc('bloquear',{persona:p.id});active=null;await render();}},'danger'):null));}
+function personCard(p,list){
+  if(p.id===user.id)return h('div',{class:'person'},h('strong',{},p.nombre),note('Tu perfil'));
+  const privado=p.privado&&!p.seguido;
+  return h('div',{class:'person'},row(miniAvatar(p),h('strong',{},p.nombre),
+    privado?note('Perfil privado'):null),
+    row(
+      button(p.seguido?'Dejar de seguir':p.pendiente?'Cancelar solicitud':privado?'Solicitar seguimiento':'Seguir',
+        async()=>{await privacidadRpc(p.seguido||p.pendiente?'dejar':'seguir',{persona:p.id});await render();}),
+      privado?null:button('Mensaje',()=>{
+        const c=list.find(x=>x.persona===p.id);
+        if(c)openChat(c);
+        else{active={new:true,persona:p.id,nombre:p.nombre};document.getElementById('layout').classList.add('open');showNew(active);}
+      },'primary'),
+      button('Bloquear',async()=>{if(confirm('¿Bloquear a esta persona?')){
+        await privacidadRpc('bloquear',{persona:p.id});active=null;await render();
+      }},'danger')
+    )
+  );
+}
+
 function openChat(c){active={id:c.id};document.getElementById('layout')?.classList.add('open');chatSig='';document.getElementById('chatpanel')?.replaceChildren(note('Cargando conversación…'));render().catch(e=>notice(e.message,true));}
 function back(){active=null;document.getElementById('layout')?.classList.remove('open');document.getElementById('chatpanel')?.replaceChildren(note('Elegí una conversación.'));}
 function composer(person,after){const ta=h('textarea',{name:'texto',placeholder:'Escribí un mensaje…','aria-label':'Mensaje',maxlength:4000,required:true,rows:2});const f=h('form',{class:'compose',onsubmit:async e=>{e.preventDefault();const b=f.querySelector('button');b.disabled=true;try{const x=await rpc('enviar',{persona:person,texto:ta.value});ta.value='';await after(x);}catch(err){notice(err.message,true);}finally{b.disabled=false;}}},ta,h('button',{type:'submit',class:'primary'},'Enviar'));ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();if(!f.querySelector('button').disabled)f.requestSubmit();}});return f;}
