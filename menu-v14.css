@@ -36,3 +36,16 @@ body.mimo-menu-activo>header.mimo-legacy-header{display:none}
 .mimo-nav .mimo-perfil-anchor>button{flex-direction:column;font-size:.68rem;min-width:3.1rem;padding:.25rem;min-height:44px}
 .mimo-nav .mimo-perfil-anchor>.mimo-panel{position:absolute;top:calc(100% + .55rem);right:0;bottom:auto;left:auto;transform:none;width:min(300px,calc(100vw - 1rem));max-height:calc(100dvh - 10rem);box-sizing:border-box;border-radius:1rem;box-shadow:0 8px 32px #132b2626;padding:1rem}
 @media(max-width:390px){.mimo-nav .mimo-perfil-anchor>button{min-width:2.65rem}}
+
+/* v14.3 — guardia veterinaria: acceso circular elevado, al extremo inferior derecho. */
+.mimo-nav .mimo-bottom{grid-template-columns:minmax(0,.9fr) minmax(0,1.12fr) minmax(0,1fr) minmax(0,.86fr) minmax(0,1fr);gap:.1rem;align-items:center;padding-inline:.35rem;position:relative;min-height:4.65rem;box-sizing:border-box}
+.mimo-nav .mimo-bottom .mimo-brand{font-size:clamp(.95rem,3.6vw,1.65rem);padding-inline:0}
+.mimo-nav .mimo-bottom button{font-size:clamp(.63rem,2.6vw,.9rem);padding-inline:0}
+.mimo-nav .mimo-bottom .mimo-urgencias{position:relative;align-self:stretch;flex-direction:column;justify-content:flex-end;gap:.12rem;min-width:0;min-height:3.75rem;padding:0 0 .1rem;color:#a52332;background:transparent;border:0;border-radius:.75rem;font-weight:800;font-size:clamp(.66rem,2.6vw,.88rem);line-height:1.15;text-align:center;overflow:visible}
+.mimo-nav .mimo-sos-circle{position:absolute;bottom:1.75rem;left:50%;transform:translateX(-50%);width:clamp(48px,14vw,58px);aspect-ratio:1;box-sizing:border-box;display:grid;place-items:center;border-radius:50%;background:#b52235;color:#fff;border:3px solid #fff;box-shadow:0 3px 10px #9b203957,0 0 0 1px #e9b5bb}
+.mimo-nav .mimo-sos-circle svg{width:27px;height:27px;stroke-width:3.3}
+.mimo-nav .mimo-bottom .mimo-urgencias:hover .mimo-sos-circle,.mimo-nav .mimo-bottom .mimo-urgencias[aria-current=page] .mimo-sos-circle{background:#8d1728}
+.mimo-nav .mimo-bottom .mimo-urgencias:focus-visible{outline:2px solid #a52332;outline-offset:2px}
+.mimo-nav .mimo-sos-label{display:block;white-space:nowrap}
+/* Mantener el panel de cuenta sobre la cabecera y las acciones arriba a la derecha. */
+.mimo-nav .mimo-top{justify-content:flex-end}
