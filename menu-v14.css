@@ -1,4 +1,4 @@
-/* Navegación común: tres destinos inferiores y accesos personales superiores. */
+/* Navegación común: marca y tres destinos inferiores y accesos personales superiores. */
 body.mimo-menu-activo{padding-top:4.2rem;padding-bottom:calc(5.2rem + env(safe-area-inset-bottom))}
 .mimo-nav[hidden],.mimo-nav [hidden]{display:none!important}
 nav.mimo-nav{position:fixed;inset:auto 0 0;z-index:1200;display:block;overflow:visible;background:#fff;color:#233b34;padding:0;box-shadow:0 -3px 20px #132b261c;border-top:1px solid #dce5df;font:600 .9rem/1.25 system-ui,sans-serif}
@@ -19,3 +19,14 @@ nav.mimo-nav{position:fixed;inset:auto 0 0;z-index:1200;display:block;overflow:v
 .mimo-nav :focus-visible{outline:2px solid #27674e;outline-offset:2px}
 body.mimo-menu-activo>header.mimo-legacy-header{display:none}
 @media(max-width:390px){.mimo-nav .mimo-actions a,.mimo-nav .mimo-actions button{min-width:2.8rem}.mimo-nav .mimo-brand{font-size:1.35rem}.mimo-nav .mimo-top{padding:.4rem .55rem}}
+
+/* v14.1: marca inferior izquierda y urgencias siempre visibles. */
+.mimo-nav .mimo-bottom{grid-template-columns:minmax(0,.95fr) repeat(3,minmax(0,1fr));gap:.15rem;padding-inline:.4rem}
+.mimo-nav .mimo-bottom .mimo-brand{font-size:clamp(1.05rem,4.1vw,1.65rem);min-height:3.75rem;padding:.25rem;justify-content:center;white-space:nowrap;letter-spacing:-.05em;align-self:stretch}
+.mimo-nav .mimo-bottom button{font-size:clamp(.69rem,2.8vw,.9rem);min-width:0;overflow-wrap:normal;padding-inline:0}
+.mimo-nav .mimo-top .mimo-urgencias{background:#a52332;color:#fff;border:1px solid #a52332;border-radius:.75rem;padding:.38rem .62rem;min-height:44px;gap:.38rem;flex-shrink:0;font-size:.78rem;line-height:1.15;font-weight:750;text-align:left}
+.mimo-nav .mimo-top .mimo-urgencias:hover,.mimo-nav .mimo-top .mimo-urgencias.activa,.mimo-nav .mimo-top .mimo-urgencias[aria-current=page]{background:#811a26;color:#fff}
+.mimo-nav .mimo-urgencias svg{width:25px;height:25px;stroke-width:2}
+.mimo-nav .mimo-actions{margin-left:auto}
+.mimo-nav .mimo-actions a,.mimo-nav .mimo-actions button{min-height:44px}
+@media(max-width:390px){.mimo-nav .mimo-top{gap:.2rem;padding:.35rem .45rem}.mimo-nav .mimo-top .mimo-urgencias{font-size:.7rem;padding:.35rem .42rem;gap:.25rem}.mimo-nav .mimo-urgencias svg{width:22px;height:22px}.mimo-nav .mimo-actions{gap:0}.mimo-nav .mimo-actions a,.mimo-nav .mimo-actions button{min-width:2.65rem}}
