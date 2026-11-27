@@ -8,9 +8,11 @@ import { crearBiblioteca } from './biblioteca.js?v=15'
 import { crearComunidad } from './comunidad.js?v=18'
 
 import { crearPersona, mascotasReales } from './usuario.js?v=16'
-import { accesoRuta, crearAdmin } from './admin.js?v=22'
-import { esAdmin, verificar, salir } from './sesion.js?v=22'
-import { crearEspeciales } from './perfiles-especiales.js?v=22'
+import { accesoRuta, crearAdmin } from './admin.js?v=23'
+import { esAdmin, verificar, salir } from './sesion.js?v=23'
+import { crearEspeciales } from './perfiles-especiales.js?v=23'
+
+import { misTurnosVista } from './turnos.js?v=23'
 
 /* ───────── Estado ───────── */
 const estado = {
@@ -45,6 +47,7 @@ const vistas = {
     h('div', { id: 'mapa', role: 'application', 'aria-label': 'Mapa de lugares para mascotas' })),
 
   mascota: perfiles.vista,
+  turnos: misTurnosVista,
 
   urgencias: () => h('section', {class:'mimo-pila'}, h('a',{class:'chip especial-enlace',href:'#profesionales'},'Directorio de profesionales'), vistaGuardias()),
   profesionales: especiales.veterinarios,

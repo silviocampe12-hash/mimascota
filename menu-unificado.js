@@ -49,6 +49,7 @@
           <h2>Mi cuenta</h2><button type="button" class="mimo-close" aria-label="Cerrar menú">×</button>
           <a href="${route('persona')}">Mi perfil</a>
           <a href="${route('mascota')}">Mis mascotas</a>
+          <a href="${route('turnos')}">Mis turnos</a>
           <a href="./social-v13.html?vista=privacidad">Privacidad social</a>
           <a href="${route('admin')}" id="nav-admin" hidden>Administración</a>
           ${home?'<button type="button" id="cerrar-sesion">Cerrar sesión</button>':'<button type="button" data-salir>Cerrar sesión</button>'}

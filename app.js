@@ -1,3 +1,3 @@
 // Entrada de Mimo: no inicializa ningún módulo local antes de verificar la sesión.
-import { iniciar } from './sesion.js?v=22';
+import { iniciar } from './sesion.js?v=23';
 iniciar();

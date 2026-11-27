@@ -2,10 +2,12 @@
 import { h } from './seguridad.js?v=15';
 import { nuevoId } from './mascotas.js?v=15';
 import { PAISES, ubicacionPublica } from './ubicacion.js?v=9';
-import { esAdmin, verificar } from './sesion.js?v=22';
+import { esAdmin, verificar } from './sesion.js?v=23';
 import { sb, resultado } from './supabase.js?v=11';
 import {detallesPublicos,panelGestion} from './perfiles-v17.js?v=17';
-import {panelTurnos} from './turnos.js?v=1';
+import {panelTurnos} from './turnos.js?v=23';
+import {VETS} from './datos.js';
+const nombreDemo=(VETS.find(v=>v.id===1)?.nombre||'Clínica Cuatro Patas')+' (demo)';
 const TIPOS=['rescatista','veterinario'];
 const ORGANIZACIONES=['Rescatista independiente','Grupo de rescate','Refugio','Protectora'];
 const AYUDAS=['Adopciones','Hogares provisorios','Apadrinamiento','Voluntariado','Insumos','Traslados'];
@@ -62,7 +64,7 @@ export function crearEspeciales(render){
  const busquedas={rescatista:'',veterinario:''},edicion={rescatista:null,veterinario:null},detalle={rescatista:null,veterinario:null};
  const intentar=fn=>async (...a)=>{try{await fn(...a);}catch(e){alert(e.message);}};
  function ficha(p){
-  const u=p.ubicacion;return card(h('div',{class:'especial-identidad'},h('span',{class:'especial-avatar','aria-hidden':'true'},p.nombre.slice(0,1).toUpperCase()),h('div',{},h('h2',{},p.nombre),nota(p.tipo==='rescatista'?p.organizacion:'Profesional veterinario'),nota('Ficha de prueba · Identidad no verificada'))),u?dato('Ubicación',[u.ciudad,u.provincia,u.nombrePais].join(' · ')):null,dato('Zona de actividad',p.zona),dato('Especies',p.especies),dato('Sobre el perfil',p.descripcion),p.tipo==='rescatista'?dato('Formas de colaborar',p.ayudas.join(' · ')):dato('Especialidad',p.especialidad),p.tipo==='veterinario'?dato('Matrícula declarada (sin verificar)',p.matricula):null,p.tipo==='veterinario'?dato('Autoridad emisora',p.autoridad):null,nota('La vinculación de responsables se gestiona en Perfiles institucionales. No hay pagos habilitados.'),detallesPublicos(p),p.tipo==='veterinario'?panelTurnos(p.id):null);
+  const u=p.ubicacion;return card(h('div',{class:'especial-identidad'},h('span',{class:'especial-avatar','aria-hidden':'true'},p.nombre.slice(0,1).toUpperCase()),h('div',{},h('h2',{},p.nombre),nota(p.tipo==='rescatista'?p.organizacion:'Profesional veterinario'),nota('Ficha de prueba · Identidad no verificada'))),u?dato('Ubicación',[u.ciudad,u.provincia,u.nombrePais].join(' · ')):null,dato('Zona de actividad',p.zona),dato('Especies',p.especies),dato('Sobre el perfil',p.descripcion),p.tipo==='rescatista'?dato('Formas de colaborar',p.ayudas.join(' · ')):dato('Especialidad',p.especialidad),p.tipo==='veterinario'?dato('Matrícula declarada (sin verificar)',p.matricula):null,p.tipo==='veterinario'?dato('Autoridad emisora',p.autoridad):null,nota('La vinculación de responsables se gestiona en Perfiles institucionales. No hay pagos habilitados.'),detallesPublicos(p),p.tipo==='veterinario'?(p.ubicacion?.pais==='AR'?panelTurnos(p.id):nota('Turnos: el piloto utiliza horario argentino.')):null);
  }
  function editor(tipo,p){
   const x=p||{},u=x.ubicacion||{},rescate=tipo==='rescatista';
@@ -78,7 +80,7 @@ export function crearEspeciales(render){
   const edit=edicion[tipo]&&edicion[tipo]!=='nuevo'?datos.find(p=>p.id===edicion[tipo]&&p.tipo===tipo):null;
   return h('section',{class:'mimo-pila especial-pagina'},h('h1',{},titulo),nota('Directorio de prueba. Las fichas no acreditan identidad; los responsables pueden vincularse por invitación.'),tipo==='rescatista'?h('a',{class:'chip especial-enlace',href:'#ayuda'},'Ver adopciones y casos de ayuda'):h('a',{class:'chip especial-enlace',href:'#urgencias'},'Ver guardias veterinarias'),admin?h('p',{class:'pronto'},'Administración autorizada. Los borradores y archivados están protegidos por Supabase.'):null,admin?btn('Crear perfil',()=>{edicion[tipo]='nuevo';detalle[tipo]=null;render();},'btn especial-enlace'):null,admin&&edicion[tipo]?editor(tipo,edit):null,
   h('form',{class:'especial-buscar',onsubmit:e=>{e.preventDefault();busquedas[tipo]=texto(new FormData(e.currentTarget).get('q'));detalle[tipo]=null;render();}},h('input',{name:'q',type:'search',value:busquedas[tipo],placeholder:'Buscar nombre, ciudad o especie','aria-label':'Buscar perfiles'}),h('button',{class:'btn',type:'submit'},'Buscar')),
-  tipo==='veterinario'&&normal('Veterinaria de demostración peluquería agenda turnos').includes(normal(busquedas[tipo]))?card(h('div',{class:'especial-identidad'},h('span',{class:'especial-avatar','aria-hidden':'true'},'D'),h('div',{},h('h3',{},'Veterinaria de demostración'),nota('Prototipo ficticio · turnos de peluquería y veterinaria'))),btn(detalle[tipo]==='demo'?'Cerrar ficha':'Ver perfil y sacar turno',()=>{detalle[tipo]=detalle[tipo]==='demo'?null:'demo';render();}),detalle[tipo]==='demo'?panelTurnos('demo'):null):null,
+  tipo==='veterinario'&&normal(nombreDemo+' Veterinaria de demostración peluquería agenda turnos').includes(normal(busquedas[tipo]))?card(h('div',{class:'especial-identidad'},h('span',{class:'especial-avatar','aria-hidden':'true'},'D'),h('div',{},h('h3',{},nombreDemo),nota('Prototipo ficticio · turnos de peluquería y veterinaria'))),btn(detalle[tipo]==='demo'?'Cerrar ficha':'Ver perfil y sacar turno',()=>{detalle[tipo]=detalle[tipo]==='demo'?null:'demo';render();}),detalle[tipo]==='demo'?panelTurnos('demo'):null):null,
   abierto?ficha(fichaPublica(abierto)):null,
   admin&&abierto&&abierto.estado!=='Archivado'?card(panelGestion(abierto)):null,
   h('div',{class:'grilla'},visibles.length?visibles.map(p=>card(h('div',{class:'especial-identidad'},h('span',{class:'especial-avatar','aria-hidden':'true'},p.nombre.slice(0,1).toUpperCase()),h('div',{},h('h3',{},p.nombre),nota(p.ubicacion.ciudad+' · '+p.ubicacion.provincia))),nota(admin?p.estado+' · No verificado':'Ficha no verificada'),btn(abierto?.id===p.id?'Cerrar ficha':'Ver perfil',()=>{detalle[tipo]=abierto?.id===p.id?null:p.id;render();}),admin?h('div',{class:'fila'},btn('Editar',()=>{edicion[tipo]=p.id;render();}),p.estado!=='Archivado'?btn('Archivar',intentar(async()=>{if(confirm('¿Archivar esta ficha de prueba?')){await archivarEspecial(p.id);detalle[tipo]=null;edicion[tipo]=null;render();}})):null):null)):nota('Todavía no hay fichas para mostrar.')));
