@@ -3,7 +3,8 @@ import { almacen } from './almacenamiento.js?v=15';
 import { h } from './seguridad.js?v=15';
 import { POSTS } from './datos.js';
 import { avatar, huella, nuevoId } from './mascotas.js?v=15';
-import { perfilVisible } from './usuario.js?v=15';
+import { perfilVisible } from './usuario.js?v=16';
+import { preferenciasComunidad } from './preferencias-comunidad.js?v=18';
 import { validarArchivo, guardarArchivo, leerArchivo, borrarArchivo } from './multimedia.js?v=15';
 const KEY='mimo_comunidad_v1';
 const filtros=['Todo','Siguiendo','Reels','Guardados','Mis publicaciones'];
@@ -28,13 +29,24 @@ export function fuentes(){
   const mascotas=lista(leer('mimo_mascotas',[]));
   const nombre=texto(perfil.nombre,80)||'Mi perfil';
   const roles=perfil.roles;
-  const galeria=mascotas.flatMap(m=>lista(m.galeria).filter(a=>a.compartido===true).map(a=>({id:'gal:'+m.id+':'+a.id,autor:nombre,autorId:'local',roles,fotoPersona:perfil.fotoId,mascota:m.nombre,avatarPet:m,fecha:a.creadoEn,formato:a.tipo?.startsWith('video/')?'Video':'Fotos',texto:a.descripcion||'',media:[{id:a.id,tipo:a.tipo}],origen:'galeria',propio:true,visibilidad:'Comunidad'})));
+  const galeria=preferenciasComunidad().mostrar?mascotas.flatMap(m=>lista(m.galeria).filter(a=>a.compartido===true).map(a=>({id:'gal:'+m.id+':'+a.id,autor:nombre,autorId:'local',roles,fotoPersona:perfil.fotoId,mascota:m.nombre,avatarPet:m,fecha:a.creadoEn,formato:a.tipo?.startsWith('video/')?'Video':'Fotos',texto:a.descripcion||'',media:[{id:a.id,tipo:a.tipo}],origen:'galeria',propio:true,visibilidad:'Comunidad'}))):[];
   const demos=POSTS.map(p=>({id:'demo:'+p.id,autor:p.autor,autorId:'demo:'+p.id,mascota:p.autor,avatarPet:p,formato:'Texto',texto:p.texto,media:[],demo:true,baseLikes:p.likes,visibilidad:'Comunidad'}));
   return {nombre,roles,mascotas,perfil,externos:[...galeria,...demos]};
 }
 export function filtrarFeed(posts,estado,filtro,q=''){
   const norm=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  return posts.filter(p=>!estado.ocultos.includes(p.id)&& (p.visibilidad==='Comunidad'||(p.propio&&filtro==='Mis publicaciones')) && norm([p.autor,p.mascota,p.texto].join(' ')).includes(norm(q)) && (filtro==='Todo'||filtro==='Siguiendo'&&estado.siguiendo.includes(p.autorId)||filtro==='Reels'&&p.formato==='Reel'||filtro==='Guardados'&&estado.guardados.includes(p.id)||filtro==='Mis publicaciones'&&p.propio)).sort((a,b)=>(Date.parse(b.fecha)||0)-(Date.parse(a.fecha)||0));
+  const prefs=preferenciasComunidad();
+  return posts.filter(p=>{
+    const audiencia=p.audiencia||(p.visibilidad==='Privada'?'solo_yo':'publico');
+    // El modo privado se mantiene fuera del feed. Las publicaciones siguen siendo locales
+    // hasta contar con una distribución entre cuentas controlada por el servidor.
+    const feedVisible=audiencia!=='solo_yo'&&(!p.propio||prefs.mostrar);
+    if(estado.ocultos.includes(p.id)||!((filtro==='Mis publicaciones'&&p.propio)||feedVisible))return false;
+    if(!norm([p.autor,p.mascota,p.texto].join(' ')).includes(norm(q)))return false;
+    return filtro==='Todo'||filtro==='Siguiendo'&&estado.siguiendo.includes(p.autorId)
+      ||filtro==='Reels'&&p.formato==='Reel'||filtro==='Guardados'&&estado.guardados.includes(p.id)
+      ||filtro==='Mis publicaciones'&&p.propio;
+  }).sort((a,b)=>(Date.parse(b.fecha)||0)-(Date.parse(a.fecha)||0));
 }
 // La recodificación de imágenes no conserva el EXIF original. Los videos se guardan sin recodificar.
 async function prepararFoto(file){
@@ -138,26 +150,32 @@ export function crearComunidad(render){
         const m=fuentes().mascotas.find(x=>x.id===d.get('mascota'));if(!m)throw Error('Seleccioná una mascota registrada.');
         if(!p&&t==='Video')t=await revisarVideo(seleccionados[0]);
         for(const file of p?[]:seleccionados){const blob=t==='Fotos'?await prepararFoto(file):file;const id=nuevoId();await guardarArchivo(id,blob);nuevos.push({id,tipo:blob.type});}
-        const post={id:p?.id||nuevoId(),autorId:'local',propio:true,mascotaId:m.id,formato:t,texto:body,media:p?.media||nuevos,fecha:p?.fecha||new Date().toISOString(),visibilidad:d.get('publica')==='on'?'Comunidad':'Privada',comentarios:d.get('permitir')==='on'};
-        cambiar('posts',p?estado.posts.map(x=>x.id===p.id?post:x):[post,...estado.posts]);persistido=true;editId=null;filtro=post.visibilidad==='Privada'?'Mis publicaciones':'Todo';q='';render();
+        const audiencia=['solo_yo','amigos','publico'].includes(d.get('audiencia'))?d.get('audiencia'):'solo_yo';
+        const post={id:p?.id||nuevoId(),autorId:'local',propio:true,mascotaId:m.id,formato:t,texto:body,media:p?.media||nuevos,fecha:p?.fecha||new Date().toISOString(),
+          audiencia,visibilidad:audiencia==='solo_yo'?'Privada':'Comunidad',comentarios:preferenciasComunidad().comentarios};
+        cambiar('posts',p?estado.posts.map(x=>x.id===p.id?post:x):[post,...estado.posts]);persistido=true;editId=null;filtro=audiencia==='solo_yo'||!preferenciasComunidad().mostrar?'Mis publicaciones':'Todo';q='';render();
       }catch(err){if(!persistido)await Promise.allSettled(nuevos.map(x=>borrarArchivo(x.id)));throw err;}finally{b.disabled=false;}
     })},h('div',{class:'social-compositor'},textoInput,p?null:boton),p?null:menu,galeria,camara,grabar,adjuntos,
       p&&p.media.length?nota('Podés editar el texto y las opciones. Los archivos adjuntos se conservan.'):null,
       campoMascota,
-      h('label',{class:'social-check'},h('input',{type:'checkbox',name:'publica',checked:p?.visibilidad==='Comunidad'}),' Mostrar en Comunidad'),
-      h('label',{class:'social-check'},h('input',{type:'checkbox',name:'permitir',checked:p?.comentarios!==false}),' Permitir comentarios'),
-      nota('Si no marcás Mostrar en Comunidad, queda en Mis publicaciones. Prototipo local.'),
+      h('label',{class:'social-audiencia'},fila(h('span',{'aria-hidden':'true'},'🔒'),h('strong',{},'Quién puede ver esta publicación')),
+        h('select',{name:'audiencia','aria-label':'Privacidad de esta publicación'},
+          option('solo_yo',p?.audiencia||(p?.visibilidad==='Privada'?'solo_yo':preferenciasComunidad().mostrar?'publico':'solo_yo'),'Solo para mí'),
+          option('amigos',p?.audiencia||(p?.visibilidad==='Privada'?'solo_yo':preferenciasComunidad().mostrar?'publico':'solo_yo'),'Solo amigos (personas que sigo)'),
+          option('publico',p?.audiencia||(p?.visibilidad==='Privada'?'solo_yo':preferenciasComunidad().mostrar?'publico':'solo_yo'),'Público (todos en la app)')
+        )),
+      nota('La visibilidad general y los comentarios se configuran en Mi perfil → Privacidad social. Por ahora las publicaciones se guardan solo en este dispositivo.'),
       fila(h('button',{type:'submit',class:'btn'},p?'Guardar cambios':'Publicar'),p?btn('Cancelar edición',()=>{editId=null;render();}):null));
     return card(h('h2',{},p?'Editar publicación':'Crear publicación'),f);
   }
   function reportar(p){return intentar(()=>{const motivo=prompt('Motivo de la denuncia (no incluyas información privada):');if(!motivo?.trim())return;cambiar('denuncias',[...estado.denuncias,{id:nuevoId(),post:p.id,motivo:texto(motivo,500),fecha:new Date().toISOString()}]);alert('Denuncia guardada localmente. Aún no se envía a moderación.');});}
   function quitar(p){return intentar(async()=>{if(!confirm('¿Eliminar esta publicación y sus archivos locales?'))return;guardar({...estado,posts:estado.posts.filter(x=>x.id!==p.id),comentarios:estado.comentarios.filter(x=>x.post!==p.id),likes:estado.likes.filter(x=>x!==p.id),guardados:estado.guardados.filter(x=>x!==p.id)});render();await Promise.allSettled(p.media.map(x=>borrarArchivo(x.id)));});}
   function comentarios(p,ctx){
-    const items=estado.comentarios.filter(x=>x.post===p.id);return h('div',{class:'social-comentarios'},items.map(c=>h('div',{class:'social-comentario'},h('strong',{},ctx.nombre),nota(fecha(c.fecha)),h('p',{},c.texto),btn('Eliminar comentario',intentar(()=>{cambiar('comentarios',estado.comentarios.filter(x=>x.id!==c.id));render();})))),p.comentarios===false?nota('Comentarios desactivados.'):h('form',{class:'social-comentar',onsubmit:intentar(e=>{e.preventDefault();const t=texto(new FormData(e.currentTarget).get('comentario'),500);if(!t)return;cambiar('comentarios',[...estado.comentarios,{id:nuevoId(),post:p.id,texto:t,fecha:new Date().toISOString()}]);render();})},h('input',{name:'comentario',placeholder:'Escribí un comentario…','aria-label':'Comentario',maxlength:500,required:true}),h('button',{type:'submit',class:'btn'},'Enviar')));
+    const items=estado.comentarios.filter(x=>x.post===p.id);return h('div',{class:'social-comentarios'},items.map(c=>h('div',{class:'social-comentario'},h('strong',{},ctx.nombre),nota(fecha(c.fecha)),h('p',{},c.texto),btn('Eliminar comentario',intentar(()=>{cambiar('comentarios',estado.comentarios.filter(x=>x.id!==c.id));render();})))),(p.propio&&!preferenciasComunidad().comentarios)||p.comentarios===false?nota('Comentarios desactivados.'):h('form',{class:'social-comentar',onsubmit:intentar(e=>{e.preventDefault();const t=texto(new FormData(e.currentTarget).get('comentario'),500);if(!t)return;cambiar('comentarios',[...estado.comentarios,{id:nuevoId(),post:p.id,texto:t,fecha:new Date().toISOString()}]);render();})},h('input',{name:'comentario',placeholder:'Escribí un comentario…','aria-label':'Comentario',maxlength:500,required:true}),h('button',{type:'submit',class:'btn'},'Enviar')));
   }
   function publicacion(p,ctx){
     const liked=estado.likes.includes(p.id),saved=estado.guardados.includes(p.id),count=estado.comentarios.filter(x=>x.post===p.id).length;
-    return card(autor(p),fila(h('span',{class:'social-etiqueta'},p.formato==='Texto'?'Publicación':p.formato),p.visibilidad==='Privada'?h('span',{class:'social-etiqueta'},'Privada'):null),p.media.length?h('div',{class:p.formato==='Fotos'&&p.media.length>1?'social-fotos':'social-contenido'},p.media.map(m=>medio(m,p.formato==='Reel'))):null,p.texto?.trim()?h('p',{class:p.media.length?'social-texto social-pie':'social-texto'},p.texto):null,p.origen==='galeria'?h('a',{href:'#mascota'},'Gestionar desde Mi mascota'):null,h('div',{class:'social-interacciones'},h('button',{type:'button',class:'me-gusta','aria-pressed':String(liked),onclick:toggle('likes',p.id),'aria-label':'Dar o quitar huellita'},huella(p.avatarPet?.tipo||p.avatarPet?.especie||'perro'),String((p.baseLikes||0)+(liked?1:0))),btn(`Comentarios (${count})`,()=>{comentando=comentando===p.id?null:p.id;render();},{'aria-expanded':String(comentando===p.id)}),btn(saved?'Guardado':'Guardar',toggle('guardados',p.id),{'aria-pressed':String(saved)}),h('details',{class:'social-menu'},h('summary',{'aria-label':'Más opciones'},'···'),fila(p.propio&&!p.origen?btn('Editar',()=>{editId=p.id;render();document.querySelector('.social-editor')?.scrollIntoView({block:'center'});}):null,p.propio&&!p.origen?btn('Eliminar',quitar(p)):null,btn('Ocultar',toggle('ocultos',p.id)),btn('Denunciar',reportar(p))))),comentando===p.id?comentarios(p,ctx):null);
+    return card(autor(p),fila(h('span',{class:'social-etiqueta'},p.formato==='Texto'?'Publicación':p.formato),(p.audiencia==='amigos'?h('span',{class:'social-etiqueta'},'Solo amigos'):p.visibilidad==='Privada'?h('span',{class:'social-etiqueta'},'Solo para mí'):null)),p.media.length?h('div',{class:p.formato==='Fotos'&&p.media.length>1?'social-fotos':'social-contenido'},p.media.map(m=>medio(m,p.formato==='Reel'))):null,p.texto?.trim()?h('p',{class:p.media.length?'social-texto social-pie':'social-texto'},p.texto):null,p.origen==='galeria'?h('a',{href:'#mascota'},'Gestionar desde Mi mascota'):null,h('div',{class:'social-interacciones'},h('button',{type:'button',class:'me-gusta','aria-pressed':String(liked),onclick:toggle('likes',p.id),'aria-label':'Dar o quitar huellita'},huella(p.avatarPet?.tipo||p.avatarPet?.especie||'perro'),String((p.baseLikes||0)+(liked?1:0))),btn(`Comentarios (${count})`,()=>{comentando=comentando===p.id?null:p.id;render();},{'aria-expanded':String(comentando===p.id)}),btn(saved?'Guardado':'Guardar',toggle('guardados',p.id),{'aria-pressed':String(saved)}),h('details',{class:'social-menu'},h('summary',{'aria-label':'Más opciones'},'···'),fila(p.propio&&!p.origen?btn('Editar',()=>{editId=p.id;render();document.querySelector('.social-editor')?.scrollIntoView({block:'center'});}):null,p.propio&&!p.origen?btn('Eliminar',quitar(p)):null,btn('Ocultar',toggle('ocultos',p.id)),btn('Denunciar',reportar(p))))),comentando===p.id?comentarios(p,ctx):null);
   }
   // Buscador de perfiles, independiente del filtro local de publicaciones.
   function buscarPersonas(){
