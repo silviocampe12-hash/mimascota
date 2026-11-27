@@ -7,7 +7,7 @@ import { crearAyuda } from './ayuda.js?v=15'
 import { crearBiblioteca } from './biblioteca.js?v=15'
 import { crearComunidad } from './comunidad.js?v=15'
 
-import { crearPersona, mascotasReales } from './usuario.js?v=15'
+import { crearPersona, mascotasReales } from './usuario.js?v=16'
 import { accesoRuta, crearAdmin } from './admin.js?v=15'
 import { esAdmin, verificar, salir } from './sesion.js?v=15'
 import { crearEspeciales } from './perfiles-especiales.js?v=15'
