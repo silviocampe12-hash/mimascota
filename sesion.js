@@ -35,7 +35,7 @@ export function pantallaAcceso(modo='login',mensaje=''){
  raiz.replaceChildren(h('section',{class:'persona-pagina'},h('header',{class:'persona-cabecera'},h('h1',{},'Mimo'),nota('Acceso con Supabase')),h('article',{class:'persona-card'},h('h2',{},titulo),form,aviso,modo==='login'?h('div',{class:'fila'},btn('Crear cuenta',()=>pantallaAcceso('registro')),btn('Olvidé mi contraseña',()=>pantallaAcceso('recuperar'))):btn(modo==='cambiar'?'Cancelar y salir':'Volver',()=>modo==='cambiar'?salir():pantallaAcceso()),nota('Versión de pruebas. No ingreses documentación real sensible hasta validar la seguridad y la recuperación.'))));
 }
 let cargando=false,arrancado=false;
-async function entrar(){if(cargando||arrancado||recovery)return;cargando=true;try{await verificar();iniciarCuenta();await prepararNube();sincronizarFotoPublica().catch(e=>console.warn('Miniatura pública no sincronizada',e));document.querySelector('.dock').hidden=false;await import('./aplicacion.js?v=16');arrancado=true;}catch(e){pantallaAcceso('login','No se pudo verificar el acceso: '+e.message);}finally{cargando=false;}}
+async function entrar(){if(cargando||arrancado||recovery)return;cargando=true;try{await verificar();iniciarCuenta();await prepararNube();sincronizarFotoPublica().catch(e=>console.warn('Miniatura pública no sincronizada',e));document.querySelector('.dock').hidden=false;await import('./aplicacion.js?v=17');arrancado=true;}catch(e){pantallaAcceso('login','No se pudo verificar el acceso: '+e.message);}finally{cargando=false;}}
 export async function iniciar(){
  if(!sb){pantallaAcceso('login','No se pudo cargar Supabase. Recargá la página.');return;}
  const url=new URL(location.href),marca=url.searchParams.has('recuperar'),hash=new URLSearchParams(location.hash.slice(1));
