@@ -1,51 +1,45 @@
-/* Navegación común: marca y tres destinos inferiores y accesos personales superiores. */
-body.mimo-menu-activo{padding-top:4.2rem;padding-bottom:calc(5.2rem + env(safe-area-inset-bottom))}
+/* Navegación única Mimos: cabecera, barra inferior, menús y búsqueda. */
+body.mimo-menu-activo{padding-top:4.2rem;padding-bottom:calc(5.9rem + env(safe-area-inset-bottom))}
 .mimo-nav[hidden],.mimo-nav [hidden]{display:none!important}
-nav.mimo-nav{position:fixed;inset:auto 0 0;z-index:1200;display:block;overflow:visible;background:#fff;color:#233b34;padding:0;box-shadow:0 -3px 20px #132b261c;border-top:1px solid #dce5df;font:600 .9rem/1.25 system-ui,sans-serif}
-.mimo-nav .mimo-top{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:.5rem;height:4.05rem;background:#fff;border-bottom:1px solid #dce5df;padding:.5rem max(1rem,calc((100% - 1080px)/2));box-shadow:0 2px 12px #132b2609}
-.mimo-nav a,.mimo-nav button{color:#27674e;background:transparent;text-decoration:none;border:0;border-radius:.75rem;box-shadow:none;font:inherit;padding:.5rem;white-space:normal;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.3rem}
-.mimo-nav a.activa,.mimo-nav button[aria-expanded=true],.mimo-nav button[data-current=true]{background:#e5efe9;color:#174a34}
-.mimo-nav .mimo-brand{font-weight:900;font-size:1.55rem;color:#27674e;letter-spacing:-.06em;padding:0 .35rem}
-.mimo-nav .mimo-actions{display:flex;align-items:center;gap:.1rem}
-.mimo-nav .mimo-actions>a,.mimo-nav .mimo-perfil-anchor>button{flex-direction:column;font-size:.68rem;min-width:3.1rem;padding:.25rem}
-.mimo-nav svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.mimo-nav .mimo-bottom{max-width:720px;margin:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.3rem;padding:.45rem .65rem calc(.45rem + env(safe-area-inset-bottom))}
-.mimo-nav .mimo-bottom button{display:flex;flex-direction:column;gap:.3rem;padding:.5rem .2rem;min-height:3.75rem}
-.mimo-nav .mimo-panel{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:min(100%,540px);max-height:60dvh;overflow:auto;background:#fff;border:1px solid #dce5df;border-radius:1rem 1rem 0 0;box-shadow:0 -8px 32px #132b2626;padding:1rem}
-.mimo-nav .mimo-panel h2{font:800 1.15rem/1.25 system-ui;margin:.15rem 0 .6rem;color:#233b34}
-.mimo-nav .mimo-panel a,.mimo-nav .mimo-panel button{justify-content:flex-start;border-bottom:1px solid #edf1ed;border-radius:.4rem;padding:.85rem .5rem;text-align:left;width:100%}
-.mimo-nav .mimo-panel a:hover,.mimo-nav .mimo-panel button:hover{background:#e5efe9}
-.mimo-nav .mimo-close{position:absolute;right:.65rem;top:.5rem;width:auto!important;border:0!important;padding:.5rem!important}
-.mimo-nav :focus-visible{outline:2px solid #27674e;outline-offset:2px}
-body.mimo-menu-activo>header.mimo-legacy-header{display:none}
-@media(max-width:390px){.mimo-nav .mimo-actions>a,.mimo-nav .mimo-perfil-anchor>button{min-width:2.8rem}.mimo-nav .mimo-brand{font-size:1.35rem}.mimo-nav .mimo-top{padding:.4rem .55rem}}
-
-/* v14.1: marca inferior izquierda y urgencias siempre visibles. */
-.mimo-nav .mimo-bottom{grid-template-columns:minmax(0,.95fr) repeat(3,minmax(0,1fr));gap:.15rem;padding-inline:.4rem}
-.mimo-nav .mimo-bottom .mimo-brand{font-size:clamp(1.05rem,4.1vw,1.65rem);min-height:3.75rem;padding:.25rem;justify-content:center;white-space:nowrap;letter-spacing:-.05em;align-self:stretch}
-.mimo-nav .mimo-bottom button{font-size:clamp(.69rem,2.8vw,.9rem);min-width:0;overflow-wrap:normal;padding-inline:0}
-.mimo-nav .mimo-top .mimo-urgencias{background:#a52332;color:#fff;border:1px solid #a52332;border-radius:.75rem;padding:.38rem .62rem;min-height:44px;gap:.38rem;flex-shrink:0;font-size:.78rem;line-height:1.15;font-weight:750;text-align:left}
-.mimo-nav .mimo-top .mimo-urgencias:hover,.mimo-nav .mimo-top .mimo-urgencias.activa,.mimo-nav .mimo-top .mimo-urgencias[aria-current=page]{background:#811a26;color:#fff}
-.mimo-nav .mimo-urgencias svg{width:25px;height:25px;stroke-width:2}
-.mimo-nav .mimo-actions{margin-left:auto}
-.mimo-nav .mimo-actions>a,.mimo-nav .mimo-perfil-anchor>button{min-height:44px}
-@media(max-width:390px){.mimo-nav .mimo-top{gap:.2rem;padding:.35rem .45rem}.mimo-nav .mimo-top .mimo-urgencias{font-size:.7rem;padding:.35rem .42rem;gap:.25rem}.mimo-nav .mimo-urgencias svg{width:22px;height:22px}.mimo-nav .mimo-actions{gap:0}.mimo-nav .mimo-actions>a,.mimo-nav .mimo-perfil-anchor>button{min-width:2.65rem}}
-
-/* v14.2 — el menú de cuenta se ancla al botón superior, no a la barra inferior. */
-.mimo-nav .mimo-perfil-anchor{position:relative;flex:none;display:flex;align-items:center}
-.mimo-nav .mimo-perfil-anchor>button{flex-direction:column;font-size:.68rem;min-width:3.1rem;padding:.25rem;min-height:44px}
-.mimo-nav .mimo-perfil-anchor>.mimo-panel{position:absolute;top:calc(100% + .55rem);right:0;bottom:auto;left:auto;transform:none;width:min(300px,calc(100vw - 1rem));max-height:calc(100dvh - 10rem);box-sizing:border-box;border-radius:1rem;box-shadow:0 8px 32px #132b2626;padding:1rem}
-@media(max-width:390px){.mimo-nav .mimo-perfil-anchor>button{min-width:2.65rem}}
-
-/* v14.3 — guardia veterinaria: acceso circular elevado, al extremo inferior derecho. */
-.mimo-nav .mimo-bottom{grid-template-columns:minmax(0,.9fr) minmax(0,1.12fr) minmax(0,1fr) minmax(0,.86fr) minmax(0,1fr);gap:.1rem;align-items:center;padding-inline:.35rem;position:relative;min-height:4.65rem;box-sizing:border-box}
-.mimo-nav .mimo-bottom .mimo-brand{font-size:clamp(.95rem,3.6vw,1.65rem);padding-inline:0}
-.mimo-nav .mimo-bottom button{font-size:clamp(.63rem,2.6vw,.9rem);padding-inline:0}
-.mimo-nav .mimo-bottom .mimo-urgencias{position:relative;align-self:stretch;flex-direction:column;justify-content:flex-end;gap:.12rem;min-width:0;min-height:3.75rem;padding:0 0 .1rem;color:#a52332;background:transparent;border:0;border-radius:.75rem;font-weight:800;font-size:clamp(.66rem,2.6vw,.88rem);line-height:1.15;text-align:center;overflow:visible}
-.mimo-nav .mimo-sos-circle{position:absolute;bottom:1.75rem;left:50%;transform:translateX(-50%);width:clamp(48px,14vw,58px);aspect-ratio:1;box-sizing:border-box;display:grid;place-items:center;border-radius:50%;background:#b52235;color:#fff;border:3px solid #fff;box-shadow:0 3px 10px #9b203957,0 0 0 1px #e9b5bb}
-.mimo-nav .mimo-sos-circle svg{width:27px;height:27px;stroke-width:3.3}
+nav.mimo-nav{position:fixed;inset:auto 0 0;z-index:1200;display:block;overflow:visible;background:#fff;color:#233b34;border-top:1px solid #dce5df;box-shadow:0 -3px 20px #132b261c;font:600 .88rem/1.2 system-ui,sans-serif}
+.mimo-nav *{box-sizing:border-box}
+.mimo-nav a,.mimo-nav button{font:inherit;color:#27674e;background:transparent;text-decoration:none;cursor:pointer;border:0;border-radius:.7rem;box-shadow:none;display:flex;align-items:center;justify-content:center;gap:.3rem}
+.mimo-nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.mimo-nav [aria-current=page],.mimo-nav button[aria-expanded=true],.mimo-nav button[data-current=true]{background:#e5efe9;color:#174a34}
+.mimo-nav :focus-visible{outline:3px solid #27674e;outline-offset:2px}
+.mimo-nav .mimo-top{position:fixed;top:0;left:0;right:0;height:4.15rem;background:#fff;border-bottom:1px solid #dce5df;box-shadow:0 2px 12px #132b2609;padding:.35rem max(.65rem,calc((100% - 1080px)/2));display:flex;justify-content:flex-end;align-items:center;z-index:1210}
+.mimo-nav .mimo-actions{display:flex;align-items:center;gap:.45rem}
+.mimo-nav .mimo-search-anchor,.mimo-nav .mimo-perfil-anchor{position:relative;display:flex;flex:none}
+.mimo-nav .mimo-search-toggle,.mimo-nav .mimo-perfil-anchor>button{display:flex;flex-direction:column;gap:.1rem;padding:.25rem .6rem;min-width:4rem;min-height:3.5rem;font-size:.78rem}
+.mimo-nav .mimo-search-toggle svg,.mimo-nav .mimo-perfil-anchor>button svg{width:30px;height:30px;stroke-width:2}
+.mimo-nav .mimo-bottom{max-width:760px;margin:auto;display:grid;grid-template-columns:minmax(0,.88fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,.9fr) minmax(0,1.08fr) minmax(0,.88fr);align-items:center;gap:.05rem;min-height:4.85rem;padding:.4rem .3rem calc(.4rem + env(safe-area-inset-bottom))}
+.mimo-nav .mimo-bottom>a:not(.mimo-urgencias),.mimo-nav .mimo-bottom>button{display:flex;flex-direction:column;gap:.18rem;align-items:center;justify-content:center;min-width:0;min-height:3.8rem;padding:.15rem .1rem;font-size:clamp(.59rem,2.45vw,.77rem);line-height:1.15;text-align:center;overflow-wrap:anywhere}
+.mimo-nav .mimo-bottom>.mimo-brand{font-weight:900;letter-spacing:-.055em;color:#27674e;font-size:clamp(.95rem,3.5vw,1.5rem)!important;white-space:nowrap}
+.mimo-nav .mimo-bottom .mimo-urgencias{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-self:stretch;gap:.1rem;min-width:0;padding:0 0 .05rem;color:#a52332;background:transparent;border:0;font-weight:850;font-size:clamp(.65rem,2.35vw,.8rem);text-align:center;overflow:visible}
+.mimo-nav .mimo-sos-circle{position:absolute;bottom:1.65rem;left:50%;transform:translateX(-50%);width:clamp(45px,13vw,57px);aspect-ratio:1;border:3px solid #fff;border-radius:50%;background:#b52235;color:#fff;box-shadow:0 3px 10px #9b203957,0 0 0 1px #e9b5bb;display:grid;place-items:center}
+.mimo-nav .mimo-sos-circle svg{width:27px;height:27px;stroke-width:3.1}
 .mimo-nav .mimo-bottom .mimo-urgencias:hover .mimo-sos-circle,.mimo-nav .mimo-bottom .mimo-urgencias[aria-current=page] .mimo-sos-circle{background:#8d1728}
-.mimo-nav .mimo-bottom .mimo-urgencias:focus-visible{outline:2px solid #a52332;outline-offset:2px}
-.mimo-nav .mimo-sos-label{display:block;white-space:nowrap}
-/* Mantener el panel de cuenta sobre la cabecera y las acciones arriba a la derecha. */
-.mimo-nav .mimo-top{justify-content:flex-end}
+.mimo-nav .mimo-sos-label{white-space:nowrap}
+.mimo-nav .mimo-panel{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:min(100%,540px);max-height:65dvh;overflow:auto;background:#fff;border:1px solid #dce5df;border-radius:1rem 1rem 0 0;box-shadow:0 -8px 32px #132b2626;padding:1rem;z-index:1211}
+.mimo-nav .mimo-panel h2{font:800 1.1rem/1.2 system-ui,sans-serif;margin:.1rem 0 .75rem;color:#233b34}
+.mimo-nav .mimo-panel a,.mimo-nav .mimo-panel button:not(.mimo-close){justify-content:flex-start;width:100%;border-bottom:1px solid #edf1ed;border-radius:.4rem;padding:.8rem .55rem;text-align:left}
+.mimo-nav .mimo-panel a:hover,.mimo-nav .mimo-panel button:hover{background:#e5efe9}
+.mimo-nav .mimo-close{position:absolute;top:.4rem;right:.5rem;font-size:1.5rem;width:2.5rem;height:2.5rem}
+.mimo-nav .mimo-perfil-anchor>.mimo-panel{position:absolute;top:calc(100% + .5rem);right:0;bottom:auto;left:auto;transform:none;width:min(315px,calc(100vw - 1rem));max-height:calc(100dvh - 10rem);border-radius:1rem;box-shadow:0 8px 32px #132b2626}
+.mimo-nav .mimo-search-panel{position:absolute;top:calc(100% + .55rem);right:0;width:min(390px,calc(100vw - 1rem));background:white;border:1px solid #dce5df;border-radius:1rem;box-shadow:0 8px 32px #132b2626;padding:1rem;z-index:1212}
+.mimo-nav .mimo-search-panel label{display:block;font-size:.88rem;font-weight:700;margin:0 0 .45rem}
+.mimo-nav .mimo-search-field{display:flex;align-items:stretch;gap:.3rem}
+.mimo-nav .mimo-search-field input{flex:1;min-width:0;padding:.7rem;border:1px solid #a6c1ae;border-radius:.65rem;font:inherit;color:#233b34;background:#fff}
+.mimo-nav .mimo-search-field button{flex:none;background:#27674e;color:#fff;padding:.55rem .7rem}
+.mimo-nav .mimo-search-filtros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.25rem;margin-top:.65rem}
+.mimo-nav .mimo-search-filtros button{font-size:.83rem;min-height:2.45rem;border:1px solid #dce5df;padding:.35rem .2rem}
+.mimo-nav .mimo-search-filtros button[aria-pressed=true]{background:#e5efe9;color:#174a34;border-color:#27674e}
+body.mimo-menu-activo>header.mimo-legacy-header{display:none}
+.mimo-salida-oculta{display:none!important}
+@media(max-width:390px){
+ .mimo-nav .mimo-bottom{padding-inline:.16rem;gap:0}
+ .mimo-nav .mimo-bottom>a:not(.mimo-urgencias),.mimo-nav .mimo-bottom>button{font-size:.56rem}
+ .mimo-nav .mimo-bottom>.mimo-brand{font-size:.92rem!important}
+ .mimo-nav .mimo-sos-circle{width:44px}
+ .mimo-nav .mimo-top{padding-inline:.4rem}
+}
