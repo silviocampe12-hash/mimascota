@@ -25,6 +25,10 @@ const presence=x=>!x?'':Date.now()-Date.parse(x)<90000?'En línea (mensajes)':'�
 function stop(){generation++;clearInterval(poll);poll=null;map?.remove();map=null;chatSig='';}
 function go(t){if(!tabs.includes(t))return;tab=t;active=null;const u=new URL(location.href);u.searchParams.set('vista',t);history.replaceState(null,'',u);window.dispatchEvent(new Event('mimo-navegacion'));render();}
 for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click',()=>go(b.dataset.tab));
+window.addEventListener('popstate',()=>{
+  const next=new URLSearchParams(location.search).get('vista');
+  if(tabs.includes(next)){tab=next;render().catch(e=>notice(e.message,true));}
+});
 logout.addEventListener('click',async()=>{stop();await sb.auth.signOut({scope:'local'});location.replace('./');});
 async function boot(){if(!sb)throw Error('No se pudo cargar Supabase.');const {session}=await resultado(sb.auth.getSession());if(!session){root.replaceChildren(card(h('h1',{},'Ingresá a Mimo'),note('Necesitás iniciar sesión con tu cuenta.'),h('a',{href:'./',class:'action'},'Iniciar sesión')));notice();return;}const x=await resultado(sb.auth.getUser());user=x.user;if(!user)throw Error('Sesión no válida');fijarCuenta(user.id);await prepararNube({importar:false});await sincronizarFotoPublica().catch(e=>console.warn('Miniatura pública no sincronizada',e));logout.hidden=false;const r=await resultado(sb.from('permisos').select('rol').eq('usuario_id',user.id).maybeSingle());admin=['administrador','superadministrador'].includes(r?.rol);profile=await rpc('mi_perfil');sb.auth.onAuthStateChange((event,s)=>{if(event==='SIGNED_OUT'||(s?.user?.id&&s.user.id!==user.id)){stop();location.replace('./');}});await render();}
 async function render(){stop();const g=generation;notice();document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));if(tab==='mensajes'){root.replaceChildren(h('h1',{},'Mensajes'));return;}
@@ -65,7 +69,7 @@ async function privacyExtras(g){
       button('Rechazar',async()=>{await privacidadRpc('rechazar',{persona:p.id});await render();})
     )):note('No tenés solicitudes pendientes.')
   ),card(h('h2',{},'Privacidad de mis publicaciones'),
-    note('Estas opciones se aplican de forma general; el candado de cada publicación permite elegir su audiencia.'),
+    note('Estas opciones se aplican de forma general; el candado de cada publicación permite elegir su audiencia. El feed todavía es un prototipo local, no una publicación compartida entre cuentas.'),
     form('Guardar preferencias',async d=>{
       await preferenciasRpc('guardar',{mostrar:d.has('mostrar'),comentarios:d.has('comentarios')});
       notice('Preferencias guardadas.');
@@ -173,7 +177,8 @@ async function searchProfiles(g){
     type:'search',maxlength:80,placeholder:'Ej. Mora o María'
   });
   const filter=row(...[['todos','Todos'],['mascotas','Mascotas'],['personas','Personas']]
-    .map(([k,t])=>button(t,()=>{searchFilter=k;return render();},searchFilter===k?'primary':'')));
+    .map(([k,t])=>button(t,()=>{searchFilter=k;const u=new URL(location.href);u.searchParams.set('filtro',k);
+      history.replaceState(null,'',u);return render();},searchFilter===k?'primary':'')));
   root.replaceChildren(
     h('h1',{},'Buscar personas y mascotas'),
     note('Los perfiles públicos aparecen automáticamente. Los perfiles privados solo muestran su foto y nombre hasta que acepten el seguimiento.'),
